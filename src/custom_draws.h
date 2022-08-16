@@ -2,6 +2,10 @@
 #include "utils.h"
 #include "wasm4.h"
 
+int frame=0;
+float camX=0.0,camY=0.0;
+float TrueCamX=0.0;
+
 void setPixel(uint8_t clr,int x,int y){
     //Too safe?
     //no.
@@ -68,6 +72,42 @@ void drawLine(uint8_t clr,int start_x,int start_y,int end_x,int end_y){
 }
 //Very bodge.
 #include "raseterize.h"
+inline void draw_buildings(float TrueCamX){
+    //buildings
+    int first_building=floor(TrueCamX/60.0f)-1;
+    //simplest and probably least efficient way to z-sort.
+    float best_z=-9999.0f;
+    float last_best_z=9999.0f;
+    while(true){
+        for(int X=first_building;X<first_building+7;++X){
+            int RandZ=(X*67129)%41947;
+            float posZ=rand_range_seed(1.0f,1.5f,RandZ);
+            if(posZ<last_best_z&&posZ>best_z){
+                best_z=posZ;
+            }
+            else if (last_best_z==posZ){
+                float BPOS=60.0f*(float)(X-1);
+                float S_BPOS=BPOS-TrueCamX;
+                int RandX=(X*41947)%67129;//Random big-ass prime numbers
+                int RandXS=(X*71537)%51721;
+                int RandZS=(X*51721)%71537;
+                float posX=rand_range_seed(-0.1f,0.1f,RandX);
+                float scaleX=rand_range_seed(0.3f,0.6f,RandXS);
+                float scaleZ=rand_range_seed(0.05f,0.2f,RandZS);
+                float start_height=0.1f;//CONSTANT! DO NOT CHANGE!!
+                float height=rand_range_seed(-0.2f,-0.9f,RandXS^RandZS);//Close enough.
+                float raster_X0=PixToM11X(S_BPOS);
+                rasterize_quad({raster_X0+posX       ,height,posZ       },{scaleX,0.0f,0.0f   },{0.0f,start_height-height,0.0f},building_side);
+                rasterize_quad({raster_X0+posX       ,height,posZ+scaleZ},{.0f   ,0.0f,-scaleZ},{0.0f,start_height-height,0.0f},building_side);
+                rasterize_quad({raster_X0+posX+scaleX,height,posZ       },{.0f   ,0.0f,scaleZ },{0.0f,start_height-height,0.0f},building_side);
+            }
+        }
+        last_best_z=best_z;
+        if(best_z==-9999.0f)return;
+        best_z=-9999.0f;
+    }
+}
+
 void draw_background(int timestamp,float camX,float TrueCamX){
     *DRAW_COLORS=2;
     rect(0,HORIZON,SCREEN_SIZE,SCREEN_SIZE-HORIZON);
@@ -88,7 +128,7 @@ void draw_background(int timestamp,float camX,float TrueCamX){
         default:
             break;
         }
-    
+    draw_buildings(TrueCamX);
     //WAVES THAT ARE CLOSE TO THE CAMERA
     for(int i=first_wave;i<SCREEN_SIZE+7;i+=7)
         switch (anim_frame)
@@ -121,39 +161,52 @@ void draw_background(int timestamp,float camX,float TrueCamX){
         default:
             break;
         }
-    
-    //buildings
-    int first_building=floor(TrueCamX/60.0f)-1;
-    //simplest and probably least efficient way to z-sort.
-    float best_z=-9999.0f;
-    float last_best_z=9999.0f;
-    while(true){
-        for(int X=first_building;X<first_building+6;++X){
-            int RandZ=(X*67129)%41947;
-            float posZ=rand_range_seed(1.0f,1.5f,RandZ);
-            if(posZ<last_best_z&&posZ>best_z){
-                best_z=posZ;
+}
+void maybe_draw_indicator(int i_loc_x,int i_loc_y,uint8_t color,int strength=1){
+    if(i_loc_x<0||i_loc_x>=SCREEN_SIZE||i_loc_y<0||i_loc_y>=SCREEN_SIZE){
+        if(i_loc_y<0||i_loc_y>=SCREEN_SIZE){
+            int sg=(i_loc_y<0?1:-1);
+            int st=(i_loc_y<0?0:SCREEN_SIZE_MINUS_1);
+            int ci_loc_x=clampI(i_loc_x,0,ARENA_SIZE_X);
+            if(ci_loc_x>SCREEN_SIZE){
+                setPixel(color,SCREEN_SIZE_MINUS_1  ,st+sg);
+                if(strength==1)
+                    setPixel(color,SCREEN_SIZE_MINUS_1  ,st+2*sg);
+                setPixel(color,SCREEN_SIZE_MINUS_1  ,st);
+                setPixel(color,SCREEN_SIZE_MINUS_1-1,st);
+
+                setPixel(color,0  ,st+sg);
+                if(strength==1)
+                    setPixel(color,0  ,st+2*sg);
+                setPixel(color,0  ,st);
+                setPixel(color,0+1,st);
             }
-            else if (last_best_z==posZ){
-                float BPOS=60.0f*(float)(X-1);
-                float S_BPOS=BPOS-TrueCamX;
-                int RandX=(X*41947)%67129;//Random big-ass prime numbers
-                int RandXS=(X*71537)%51721;
-                int RandZS=(X*51721)%71537;
-                float posX=rand_range_seed(-0.1f,0.1f,RandX);
-                float scaleX=rand_range_seed(0.3f,0.6f,RandXS);
-                float scaleZ=rand_range_seed(0.05f,0.2f,RandZS);
-                float start_height=0.1f;//CONSTANT! DO NOT CHANGE!!
-                float height=rand_range_seed(-0.2f,-0.9f,RandXS^RandZS);//Close enough.
-                float raster_X0=PixToM11X(S_BPOS);
-                rasterize_quad({raster_X0+posX       ,height,posZ       },{scaleX,0.0f,0.0f   },{0.0f,start_height-height,0.0f},building_side);
-                rasterize_quad({raster_X0+posX       ,height,posZ+scaleZ},{.0f   ,0.0f,-scaleZ},{0.0f,start_height-height,0.0f},building_side);
-                rasterize_quad({raster_X0+posX+scaleX,height,posZ       },{.0f   ,0.0f,scaleZ },{0.0f,start_height-height,0.0f},building_side);
+            else{
+                setPixel(color,ci_loc_x  ,st+sg);
+                if(strength==1)
+                    setPixel(color,ci_loc_x  ,st+2*sg);
+                setPixel(color,ci_loc_x  ,st);
+                setPixel(color,ci_loc_x+1,st);
+                setPixel(color,ci_loc_x-1,st);
             }
         }
-        last_best_z=best_z;
-        if(best_z==-9999.0f)return;
-        best_z=-9999.0f;
+        else{//if (loc_x<0||loc_x>=SCREEN_SIZE){
+            //Draw 4 pixels @ each side
+            //left
+            if(strength==1)
+                setPixel(color,2,i_loc_y);
+            setPixel(color,1,i_loc_y);
+            setPixel(color,0,i_loc_y);
+            setPixel(color,0,i_loc_y-1);
+            setPixel(color,0,i_loc_y+1);
+            //right
+            if(strength==1)
+                setPixel(color,SCREEN_SIZE_MINUS_1-2,i_loc_y);
+            setPixel(color,SCREEN_SIZE_MINUS_1-1,i_loc_y);
+            setPixel(color,SCREEN_SIZE_MINUS_1,i_loc_y);
+            setPixel(color,SCREEN_SIZE_MINUS_1,i_loc_y-1);
+            setPixel(color,SCREEN_SIZE_MINUS_1,i_loc_y+1);
+        }
     }
 }
 
@@ -168,9 +221,7 @@ void draw_ship(float camera_pos_x,float camera_pos_y,float x,float y,float fx,fl
     float loc_y=y-camera_pos_y;
     int i_loc_x=(int)loc_x;
     int i_loc_y=(int)loc_y;
-    if(loc_x<0||loc_x>=SCREEN_SIZE||loc_y<0||loc_y>=SCREEN_SIZE){
-        //todo: indicator.
-    }
+    maybe_draw_indicator(i_loc_x,i_loc_y,clr1);
     if(!(loc_x<SHIP_OFFSCREEN_MIN||loc_x>SHIP_OFFSCREEN_MAX||loc_y<SHIP_OFFSCREEN_MIN||loc_y>SHIP_OFFSCREEN_MAX)){
         //7x7
         //shape:cap
@@ -227,6 +278,7 @@ void draw_bullet(float camera_pos_x,float camera_pos_y,float x,float y,float fx,
     float loc_y=y-camera_pos_y;
     int i_loc_x=(int)loc_x;
     int i_loc_y=(int)loc_y;
+    maybe_draw_indicator(i_loc_x,i_loc_y,color,0);
     for(int i=-1;i<=1;++i)
         for(int j=-1;j<=1;++j)
             setPixel(color,i_loc_x+i,i_loc_y+j);
@@ -249,13 +301,13 @@ void draw_hearts(int num,bool team){
 void display_score(int x,int y){
     *DRAW_COLORS=COLOR_PLAYER+1;
     char message[20];
-    char*ptr=atoi(x,message);
+    char*ptr=itoa(x,message);
     *ptr='\0';
     int w=(ptr-message);
     text(message,40-4*w,76);
 
     *DRAW_COLORS=COLOR_ENEMY+1;
-    ptr=atoi(y,message);
+    ptr=itoa(y,message);
     *ptr='\0';
     w=(ptr-message);
     text(message,120-4*w,76);

@@ -14,7 +14,8 @@
 #define ARENA_SIZE_X 200
 #define HALF_ARENA_SIZE_X (ARENA_SIZE_X/2)
 #define fSCREEN_SIZE ((float)SCREEN_SIZE)
-#define BULLET_INVALID -999e0f
+#define BULLET_INVALID -3.40282347E38f
+#define DASH_COOLDOWN 50
 constexpr int HORIZON=140;
 constexpr int WAVES_1_Y=157;
 constexpr int WAVES_2_Y=146;
@@ -23,9 +24,9 @@ constexpr int WAVES_2_Y=146;
 constexpr float gravity=0.01f/6.0f;
 constexpr int player_bullet_count=5;
 constexpr float speed=0.01f;
-constexpr float speed_sides=0.005f;
+constexpr float dash_speed=1.000f;
 constexpr float falloff=0.997f;
-constexpr float brake=0.80f;
+constexpr float brake=0.90f;
 constexpr float BULLET_START_SPEED=1.0f;
 /*template<T>
 T max(T a,T b){
@@ -59,6 +60,15 @@ float max(float x,float y){
 float min(float x,float y){
     return (x<y?x:y);
 }
+int min(int x,int y){
+    return (x<y?x:y);
+}
+float clamp(float x,float mn,float mx){
+    return min(max(x,mn),mx);
+}
+int clampI(int x,int mn,int mx){
+    return (x<mn?mn:(x>mx?mx:x));
+}
 int abs(int x){
     return (x>0?x:-x);
 }
@@ -69,6 +79,10 @@ float fmodf(float x,float mx){
     while(x>=mx)x-=mx;
     while(x<0.0f)x+=mx;//mathematically correct?
     return x;
+}
+
+float looped_polar_opposite(float pos){
+    return fmodf(pos+(float)HALF_ARENA_SIZE_X,(float)ARENA_SIZE_X);
 }
 /**
  * returns w/ magnitude.
@@ -151,6 +165,15 @@ void rot_minus1(float&fx,float&fy){
     fy=ox*-SIN_ROT+oy*COS_ROT;
     normalize(fx,fy);
 }
+void rot_towards(float&fx,float&fy,float dx,float dy){
+    //rotate based on the direction of the cross product
+    if(abs(dx)+abs(dy)<0.1)return;
+    float cross_product_z=dx*fy-dy*fx;
+    if(cross_product_z>0.0f)
+        rot_minus1(fx,fy);
+    else
+        rot_plus1(fx,fy);
+}
 int moved(int X,float dX){
     return X+(int)(abs(dX))*(dX>0?1:-1);
 }
@@ -159,9 +182,9 @@ int moved(int X,float dX){
 #define SHIP_OFFSCREEN_MIN ((int)(-SHIP_SIZE))
 #define SHIP_OFFSCREEN_MAX ((int)(SCREEN_SIZE+SHIP_SIZE))
 
-char* atoi(int x,char*t){
+char* itoa(int x,char*t){
     if(x>10){
-        t=atoi(x/10,t);
+        t=itoa(x/10,t);
     }
     *t='0'+(x%10);
     return t+1;
