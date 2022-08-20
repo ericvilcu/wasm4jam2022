@@ -15,7 +15,8 @@
 #define HALF_ARENA_SIZE_X (ARENA_SIZE_X/2)
 #define fSCREEN_SIZE ((float)SCREEN_SIZE)
 #define BULLET_INVALID -3.40282347E38f
-#define DASH_COOLDOWN 50
+#define INITIAL_WATER_TIME 300
+#define DASH_COOLDOWN 30
 constexpr int HORIZON=140;
 constexpr int WAVES_1_Y=157;
 constexpr int WAVES_2_Y=146;
@@ -36,6 +37,11 @@ template<T>
 T min(T a,T b){
     return (a<b?a:b);
 }*/
+int mod_I(int x,int mx){
+    int md=x%mx;
+    if(md<0)return mx+md;
+    return md;
+}
 float rand_range_seed(float mn,float mx,int sd){
     float bts=(float)(sd&0b11111)/((float)(0b11111));
     return bts*(mx-mn)+mn;
@@ -53,6 +59,9 @@ int floor(float x){
 }
 int ceil(float x){
     return (int)(x-1e-9)+(x>0?1:(x<0?-1:0));
+}
+int max(int x,int y){
+    return (x>y?x:y);
 }
 float max(float x,float y){
     return (x>y?x:y);
@@ -114,24 +123,23 @@ float square_wrap_distance(float x1,float y1,float x2,float y2){
 //Since I'm mostly using this to normalized almost-normal vectors, it is fast.
 float sqrt(float x,float error=1e-3f){
     if(x<0)return -sqrt(-x,error);//it is a convention,ok?
-    if(x>=3){
-        return 0.5f*sqrt(x*0.25f,error);
+    if(x>2){
+        return 2.0f*sqrt(x*0.25f,error);
     }
-    else if(x<0.1){
-        return 2.0f*sqrt(x*4.0f,error);
+    if(x==0)return 0.0f;
+    if(x<0.5){
+        return 0.5f*sqrt(x*4.00f,error);
     }
     float a=x;
     float b=x-1.0f;
-    while (abs(a-1.0f)>error)
+    error*=error;
+    while (abs(b)>error)
     {
-        float a2=a-a*b/2.0f;
-        float b2=b*b*(b-3)/4.0f;
-        a=a2;
-        b=b2;
+        a=a-a*b/2.0f;
+        b=b*b*(b-3.0f)/4.0f;
     }
     return a;
 }
-
 constexpr float COS_ROT=0.99452189536f;
 constexpr float SIN_ROT=0.10452846326f;
 

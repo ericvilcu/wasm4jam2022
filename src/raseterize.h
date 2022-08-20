@@ -62,18 +62,20 @@ void rasterize_quad(V3 p0,V3 d1,V3 d2,texture tex){
     int mx_pix=floor(M11ToPixX(mx));
     int Mx_pix=ceil(M11ToPixX(Mx));
     for(int x=mx_pix;x<=Mx_pix;++x){
-        //tracef("X:%d",x);
-        float my=(pp0.y*(float)(Mx_pix-x)+pp2.y*(float)(x-mx_pix))/(float)(Mx_pix-mx_pix);
-        float My=(pp1.y*(float)(Mx_pix-x)+pp3.y*(float)(x-mx_pix))/(float)(Mx_pix-mx_pix);
-        float frac_x=PixToM11X((float)x);
-        //Man I don't know how right this is I did the math by hand. If it works, I guess I'll keep it...
-        float tx=(p2.x-frac_x*p2.z)/(frac_x*(p0.z-p2.z)-(p0.x-p2.x));
-        int my_pix=floor(M11ToPixY(my));
-        int My_pix=ceil(M11ToPixY(My));
-        if(my_pix>0)
-            for(int y=my_pix;y<=My_pix;++y){
-                float ty=((float)(y-my_pix))/((float)(My_pix-my_pix));
-                setPixel(tex(tx,ty),x,y);
-            }
+        if(x>=0&&x<SCREEN_SIZE){
+            //tracef("X:%d",x);
+            float my=(pp0.y*(float)(Mx_pix-x)+pp2.y*(float)(x-mx_pix))/(float)(Mx_pix-mx_pix);
+            float My=(pp1.y*(float)(Mx_pix-x)+pp3.y*(float)(x-mx_pix))/(float)(Mx_pix-mx_pix);
+            float frac_x=PixToM11X((float)x);
+            //Man I don't know how right this is I did the math by hand. If it works, I guess I'll keep it...
+            float tx=(p2.x-frac_x*p2.z)/(frac_x*(p0.z-p2.z)-(p0.x-p2.x));
+            int my_pix=floor(M11ToPixY(my));
+            int My_pix=ceil(M11ToPixY(My));
+            if(my_pix>0)
+                for(int y=my_pix;y<=My_pix;++y){
+                    float ty=((float)(y-my_pix))/((float)(My_pix-my_pix));
+                    setPixel(tex(tx,ty),x,y);
+                }
+        }
     }
 }

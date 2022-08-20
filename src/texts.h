@@ -4,6 +4,10 @@
 //Could be 20 if I didn't leave some space on the sides.
 const char* dialogues_unmodifiable[] = 
 {
+"2My naym dave",
+"f",
+"2dave died :<",
+"f",
 "1Press x to advance\ndialogue.",
 "2Far away, a poor\nship is trying its\nhardest to survive.",
 "2268 seconds to\nimpact...",
@@ -14,6 +18,15 @@ const char* dialogues_unmodifiable[] =
 "f",
 "1Don't feel too bad.\nIt takes no time to\nget back here",
 "2265 seconds to\nimpact...\nSo time goes slower\nhere?",
+"f",
+"2Hi! What's your\nspecial move?",
+"1Dashing.",
+"2Mine too!\nAggressive!",
+"1*Defensive* dashing",
+"2Lame.",
+"f",
+"2I've changed my\nmind. Your dash\nis cool too.",
+"1Thanks.",
 "f",
 "2Hello!",
 "1Greetings.",

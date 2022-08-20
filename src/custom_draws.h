@@ -19,6 +19,17 @@ void setPixel(uint8_t clr,int x,int y){
     initial|=(clr)<<offset;
     FRAMEBUFFER[idx]=initial;
 }
+void switchPixelIfBackground(int x,int y){
+    if(x>SCREEN_SIZE_MINUS_1 || x<0 || y>SCREEN_SIZE_MINUS_1 || y<0)
+        return;
+    int offset=((x&3)<<1);
+    int idx=SCREEN_SIZE_x_BYTES*y+(x>>2);
+    uint8_t initial=FRAMEBUFFER[idx];
+    if((initial&(2<<offset))!=0){
+        uint8_t swapped=initial^(uint8_t)(1<<offset);
+        FRAMEBUFFER[idx]=swapped;
+    }
+}
 
 void drawLine(uint8_t clr,int start_x,int start_y,int end_x,int end_y){
     bool bias=false;
@@ -162,6 +173,29 @@ void draw_background(int timestamp,float camX,float TrueCamX){
             break;
         }
 }
+void interpolated_line(uint8_t color,int beginX,int beginY,int dx,int dy,float progress){
+    if(progress>0.0f)
+        drawLine(color, beginX, beginY,(int) ((float)beginX+(float)dx*min(1.0,progress)), (int) ((float)beginY+(float)dy*min(1.0f,progress)));
+}
+void draw_background_underwater(int frame,float TrueCamPos,int time){
+    //float BPOS=60.0f*(float)(X-1);
+    //float S_BPOS=BPOS-TrueCamX;
+    int rnd=(frame*71)&31+(int)TrueCamPos;
+    float percentage=(float)(INITIAL_WATER_TIME-time)*13.0f/INITIAL_WATER_TIME;
+    interpolated_line(COLOR_PLAYER, 10, 80, 20,  0,percentage- 0.0f);
+    interpolated_line(COLOR_PLAYER,150, 80,-20,  0,percentage- 1.0f);
+    interpolated_line(COLOR_PLAYER,130, 80,-30, 30,percentage- 2.0f);
+    interpolated_line(COLOR_PLAYER,100,110,-40,  0,percentage- 3.0f);
+    interpolated_line(COLOR_PLAYER, 60,110,-30,-30,percentage- 4.0f);
+    interpolated_line(COLOR_PLAYER, 30, 80, 30,-30,percentage- 5.0f);
+    interpolated_line(COLOR_PLAYER, 60, 50, 40,  0,percentage- 6.0f);
+    interpolated_line(COLOR_PLAYER,100, 50, 30, 30,percentage- 7.0f);
+    interpolated_line(COLOR_PLAYER, 70, 80, 10, 20,percentage- 8.0f);
+    interpolated_line(COLOR_PLAYER, 80,100, 10,-20,percentage- 9.0f);
+    interpolated_line(COLOR_PLAYER, 90, 80,-10,-20,percentage-10.0f);
+    interpolated_line(COLOR_PLAYER, 80, 60,-10, 20,percentage-11.0f);
+    interpolated_line(COLOR_PLAYER, 80, 70,  0, 20,percentage-12.0f);
+}
 void maybe_draw_indicator(int i_loc_x,int i_loc_y,uint8_t color,int strength=1){
     if(i_loc_x<0||i_loc_x>=SCREEN_SIZE||i_loc_y<0||i_loc_y>=SCREEN_SIZE){
         if(i_loc_y<0||i_loc_y>=SCREEN_SIZE){
@@ -210,7 +244,7 @@ void maybe_draw_indicator(int i_loc_x,int i_loc_y,uint8_t color,int strength=1){
     }
 }
 
-void draw_ship(float camera_pos_x,float camera_pos_y,float x,float y,float fx,float fy,char colors){
+void draw_ship(float camera_pos_x,float camera_pos_y,float x,float y,float fx,float fy,char colors,bool indicators=true){
     uint8_t clr2=colors&3;
     uint8_t clr1=(colors&12)>>2;
     //normalize(fx,fy);redundant.
@@ -221,7 +255,8 @@ void draw_ship(float camera_pos_x,float camera_pos_y,float x,float y,float fx,fl
     float loc_y=y-camera_pos_y;
     int i_loc_x=(int)loc_x;
     int i_loc_y=(int)loc_y;
-    maybe_draw_indicator(i_loc_x,i_loc_y,clr1);
+    if(indicators)//wh
+        maybe_draw_indicator(i_loc_x,i_loc_y,clr1);
     if(!(loc_x<SHIP_OFFSCREEN_MIN||loc_x>SHIP_OFFSCREEN_MAX||loc_y<SHIP_OFFSCREEN_MIN||loc_y>SHIP_OFFSCREEN_MAX)){
         //7x7
         //shape:cap
@@ -287,6 +322,15 @@ void draw_bullet(float camera_pos_x,float camera_pos_y,float x,float y,float fx,
     drawLine(color,i_loc_x,i_loc_y,trailX,trailY);
 }
 
+void draw_particle(int x,int y,uint8_t color){
+    if(camY==0.0f){
+        if(color&2)
+            setPixel(color,x,y);
+        else
+            switchPixelIfBackground(x,y);
+    }
+}
+
 void draw_hearts(int num,bool team){
     uint8_t clr=(team?COLOR_PLAYER:COLOR_ENEMY);
     for(int i=0;i<num;++i){
@@ -297,7 +341,6 @@ void draw_hearts(int num,bool team){
         drawLine(clr,posX+7,10,posX+4,3);
     }
 }
-
 void display_score(int x,int y){
     *DRAW_COLORS=COLOR_PLAYER+1;
     char message[20];
@@ -313,4 +356,45 @@ void display_score(int x,int y){
     text(message,120-4*w,76);
     if(x>y)*DRAW_COLORS=COLOR_PLAYER+1;
     text("-",76,76);
+}
+
+void draw_laser(float Y,int size){
+    int i_Y=(int)Y;
+    for(int y0=i_Y-size;y0<=size+i_Y;++y0)
+        if(y0<SCREEN_SIZE && y0>=0)
+            drawLine(COLOR_ENEMY,0,y0,SCREEN_SIZE_MINUS_1,y0);
+}
+
+void draw_laser_v(float X,int size){
+    int i_X=(int)fmodf(X,ARENA_SIZE_X);
+    for(int x0=i_X-size;x0<=size+i_X;++x0){
+        int tx=mod_I(x0,ARENA_SIZE_X);
+        if(tx<SCREEN_SIZE && tx>=0)
+            drawLine(COLOR_ENEMY,tx,0,tx,SCREEN_SIZE_MINUS_1);
+    }
+}
+
+void draw_pre_laser(float Y,int frame){
+    unsigned int u_frame=(unsigned int) frame;
+    int i_Y=(int)Y;
+    if(i_Y<SCREEN_SIZE && i_Y>=0){
+        unsigned int sed=(u_frame*u_frame)%6143;
+        for(int i=0;i<SCREEN_SIZE;++i){
+            sed=(sed*u_frame)%6143;
+            if(sed%5==0)
+                setPixel(COLOR_ENEMY,i,i_Y);
+        }
+    }
+}
+void draw_pre_laser_v(float X,int frame){
+    unsigned int u_frame=(unsigned int) frame;
+    int i_X=(int)X;
+    if(i_X<SCREEN_SIZE && i_X>=0){
+        unsigned int sed=(u_frame*u_frame)%6143;
+        for(int i=0;i<SCREEN_SIZE;++i){
+            sed=(sed*u_frame)%6143;
+            if(sed%5==0)
+                setPixel(COLOR_ENEMY,i_X,i);
+        }
+    }
 }

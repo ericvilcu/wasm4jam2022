@@ -6,7 +6,8 @@ CC = "$(WASI_SDK_PATH)/bin/clang" --sysroot="$(WASI_SDK_PATH)/share/wasi-sysroot
 CXX = "$(WASI_SDK_PATH)/bin/clang++" --sysroot="$(WASI_SDK_PATH)/share/wasi-sysroot"
 
 # Optional dependency from binaryen for smaller builds
-WASM_OPT = wasm-opt
+#Still doesen't apply it properly :<
+WASM_OPT = C:/Users/ericv/Desktop/wasm4/binaryen109/bin/wasm-opt
 WASM_OPT_FLAGS = -Oz --zero-filled-memory --strip-producers
 
 # Whether to build for debugging instead of release
