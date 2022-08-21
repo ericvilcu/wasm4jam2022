@@ -98,7 +98,7 @@ void tutorial(){
     text("Going below the", 3, 85);
     text(" waves gives tempo-", 3, 95);
     text(" -rary immunity", 3, 105);
-    text("<-PvP        story->", 3, 120);
+    text("<-PvP        story->", 0, 120);
     text("GOOD LUCK!", 3, 135);
 };
 int next_dialogue=0;//should have used a char*. May have lessened the cursed stuff too. a little late now.

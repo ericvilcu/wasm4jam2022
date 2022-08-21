@@ -25,7 +25,7 @@ V2 project(V3 a){
 
 uint8_t building_side(float x,float y){
     if(((x>=0.1f&&x<=0.4)||(x>=0.6f&&x<=0.9))&&
-        ((y>=0.1f&&y<=0.3)||(y>=0.4f&&y<=0.7)))//Check if it should be a window
+        ((y>=0.1f&&y<=0.3)||(y>=0.4f&&y<=0.6)||(y>=0.7&&y<=0.9)))//Check if it should be a window
         return 0x0;
     return 0x1;
 }

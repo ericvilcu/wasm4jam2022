@@ -26,16 +26,16 @@ const ENEMY_INIT_LIST_STRUC ENEMY_INIT_LISTS[]={
     //Our ship keeps blowing up
     {0xffff00,2,80 ,0,4,         1,1,1,0,15     ,0x10},
     //diver stats
-    {0x11ffff,4,120,1,15,   7*16+0,5,1,5,2      ,0x40},
+    {0x11ffff,4,120,1,15,   7*16+0,5,1,5,2      ,0x45},
     //dragon/dagger ship 
     {0xAAAAAA,4,80 ,4,7,    5*16+1,4,1,0,5+16   ,0x23},
     //{0xAAAAAA,4,80 ,4,19,        0,9,1,0,0      ,},
     //The OwO
-    {0xffaed0,7,40 ,0,19,   0*16+0,5,1,1,4      ,0x40},
+    {0xffaed0,7,40 ,0,19,   0*16+0,5,1,1,4      ,0x45},
     //Introspection
     {0xFFAA00,2,80 ,2,14+20*12,  5,1,9,0,0      ,0x23},
     //Our ship keeps blowing up 2
-    {0xffff00,5,80 ,8+2,19+20*2,17,1,1,0,1      ,0x10},
+    {0xffff00,5,80 ,8+2,19+20*2,17,1,1,0,3      ,0x76},
 };
 
 //big array because thou shalt not use malloc/free/new/delete.
@@ -131,18 +131,21 @@ void ship_physics(ship& my_ship,bool brake_on){
         my_ship.waterTime-=1;
         if(my_ship.waterTime<0&&my_ship.iFrames<0){
             my_ship.waterTime=INITIAL_WATER_TIME;
+            sound::sound_effect(sound::WATER_DEATH);
             my_ship.hearts-=1;
         }
     }
 }
 void try_hit_enemy(float X,float Y){
     if(enemy.iFrames<=0&&square_wrap_distance(X,Y,enemy.shipX,enemy.shipY)<8.0f){
+        sound::sound_effect(sound::SOUND_ENEMY_HIT);
         enemy.iFrames=20;
         enemy.hearts-=1;
     }
 };
 void try_hit_enemy_player(float X,float Y){
     if(enemy.iFrames<=0&&square_wrap_distance(X,Y,enemy.shipX,enemy.shipY)<4.0f){
+        sound::sound_effect(sound::SOUND_ENEMY_HIT);
         enemy.iFrames=20;
         enemy.hearts-=1;
     }
@@ -167,6 +170,7 @@ void try_hit_player(float X,float Y){
     if(player.iFrames<=0&&square_wrap_distance(X,Y,player.shipX,player.shipY)<4.0f){
         player.iFrames=20;
         player.hearts-=1;
+        sound::sound_effect(sound::SOUND_PLAYER_HIT);
     }
 };
 uint8_t AI_STATE=0;
@@ -304,8 +308,8 @@ void do_ai_tick(int timestamp,int enemy_id){
     }
     case AI_STATE_SPECIAL_ATTACK:{//Special attacks :>
         //tracef("SPECIAL TIMER:%d;atk=%d",(int)AI_STATE_TIMER,(int)(ENEMY_INIT_LISTS[enemy_id].special>>2));
+        //tracef("%d",(int)AI_STATE_TIMER);
         switch (ENEMY_INIT_LISTS[enemy_id].special>>2){
-            //tracef("%d",(int)AI_STATE);
             case 1:{
                 AI_STATE_TIMER-=1;
                 int ast=AI_STATE_TIMER&63;
@@ -370,7 +374,7 @@ void do_ai_tick(int timestamp,int enemy_id){
                             )
                                 player.hearts=0;//insta-kill may be a little much.
                         }
-                        if(AI_STATE_TIMER==0){
+                        if(AI_STATE_TIMER<=0){
                             AI_STATE=AI_STATE_AGGRESSIVE;
                             AI_STATE_TIMER=120;
                         }
@@ -380,6 +384,7 @@ void do_ai_tick(int timestamp,int enemy_id){
                             draw_pre_laser_v(fmodf(enemy.shipX-camX,ARENA_SIZE_X),frame);
                         if(h)
                             draw_pre_laser(enemy.shipY,frame);
+                        AI_STATE_TIMER-=1;
                     }
                 }
                 else AI_STATE=AI_STATE_READYING;

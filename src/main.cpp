@@ -224,6 +224,7 @@ void update () {
         draw_ship(camX,camY,player.shipX,player.shipY,player.shipRotX,player.shipRotY,ALL_PLAYER_COLORS);
         draw_ship(camX,camY,enemy.shipX,enemy.shipY,enemy.shipRotX,enemy.shipRotY,ALL_ENEMY_COLORS);
         if(enemy.hearts<=0){
+            sound::sound_effect(sound::SOUND_DEATH);
             sound::switch_track(-1);//silence, for a bit.
             PALETTE[0]=standard_color_0;
             PALETTE[1]=standard_color_1;
@@ -231,6 +232,7 @@ void update () {
             clearAllBullets();
         }
         else if(player.hearts<=0){
+            sound::sound_effect(sound::SOUND_DEATH);
             PALETTE[0]=standard_color_1;
             PALETTE[1]=standard_color_0;
             player.iFrames=120;
@@ -249,7 +251,7 @@ void update () {
         ship_die_physics(player,frame,ALL_PLAYER_COLORS);
         *DRAW_COLORS=3;
         text("Let's try\n        that again.",4,0);
-        if(losses>2)
+        if(losses>3)
             text("You can hold\nx+z to skip\nthis faster.",4,60);
         if(losses%3==0)
             text("This loss will\nmake you stronger.",4,160-8*2-1);
@@ -261,7 +263,7 @@ void update () {
             state='s';
             //Start battle
             reset_enemy();
-            player.hearts=3+losses/4;
+            player.hearts=3+losses/3;
             player.shipY=95.5f;
             player.shipVelX=0.0f;
             player.shipVelY=0.0f;
@@ -293,6 +295,7 @@ void update () {
             }
         }
         if(player.hearts<=0||enemy.hearts<=0){
+            sound::sound_effect(sound::SOUND_DEATH);
             if(player.hearts<=0&&enemy.hearts<=0){
                 player.iFrames=300;
                 state='q';
@@ -375,9 +378,9 @@ void start(){
     PALETTE[2] = 0xff0000;
     PALETTE[3] = 0xffffff;
     sound::switch_track(2);
-    if(abs(sqrt(1.0f)-1.0f)>=1e-2f)trace("FIX sqrt (again)");
+    /*if(abs(sqrt(1.0f)-1.0f)>=1e-2f)trace("FIX sqrt (again)");
     if(abs(sqrt(4.0f)-2.0f)>=1e-2f)trace("FIX sqrt (again)");
     if(abs(sqrt(81.0f)-9.0f)>=1e-2f)trace("FIX sqrt (again)");
     if(abs(sqrt(25.0f)-5.0f)>=1e-2f)trace("FIX sqrt (again)");
-    if(abs(sqrt(49.0f)-7.0f)>=1e-2f)trace("FIX sqrt (again)");
+    if(abs(sqrt(49.0f)-7.0f)>=1e-2f)trace("FIX sqrt (again)");*/
 }
