@@ -150,14 +150,17 @@ void update () {
         draw_ship(camX,camY,player.shipX,player.shipY,player.shipRotX,player.shipRotY,ALL_PLAYER_COLORS);
         if(TrueCamX<-200.0){
             //PVP TIME!
+            sound::switch_track(1);
             clearAllBullets();
             PALETTE[3] = 0x4455ff;
             enemy.shipY=210.0f;
             enemy.invalid_time=200.0f;
             state='p';
             enemy.hearts=player.hearts=3;
+            sound::shuffle=true;
         }
         else if(TrueCamX>200.0){
+            sound::switch_track(ENEMY_INIT_LISTS[0].songs&15);
             //Story time!
             PALETTE[3] = ENEMY_INIT_LISTS[0].color;
             state='c';
@@ -179,9 +182,11 @@ void update () {
         }
         if(talk()==2){
             if(progression&1){//Enemy death cutscene played. Switch colors & stuff
+                sound::switch_track(ENEMY_INIT_LISTS[(progression&1)+(progression>>1)].songs&15);
                 PALETTE[3]=ENEMY_INIT_LISTS[(progression&1)+(progression>>1)].color;
             }
             else{//Intro cutscene played. Initialize fight.
+                sound::switch_track(ENEMY_INIT_LISTS[(progression&1)+(progression>>1)].songs>>4);
                 state='s';
                 //Start battle
                 reset_enemy();
@@ -219,6 +224,7 @@ void update () {
         draw_ship(camX,camY,player.shipX,player.shipY,player.shipRotX,player.shipRotY,ALL_PLAYER_COLORS);
         draw_ship(camX,camY,enemy.shipX,enemy.shipY,enemy.shipRotX,enemy.shipRotY,ALL_ENEMY_COLORS);
         if(enemy.hearts<=0){
+            sound::switch_track(-1);//silence, for a bit.
             PALETTE[0]=standard_color_0;
             PALETTE[1]=standard_color_1;
             state='c';losses=0;
@@ -359,6 +365,7 @@ void update () {
         }
         break;
     }
+    sound::tick_play();
 }
 
 
@@ -367,6 +374,7 @@ void start(){
     PALETTE[1] = standard_color_1;
     PALETTE[2] = 0xff0000;
     PALETTE[3] = 0xffffff;
+    sound::switch_track(2);
     if(abs(sqrt(1.0f)-1.0f)>=1e-2f)trace("FIX sqrt (again)");
     if(abs(sqrt(4.0f)-2.0f)>=1e-2f)trace("FIX sqrt (again)");
     if(abs(sqrt(81.0f)-9.0f)>=1e-2f)trace("FIX sqrt (again)");

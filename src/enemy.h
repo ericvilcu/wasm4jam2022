@@ -1,6 +1,7 @@
 #pragma once
 #include "utils.h"
 #include "particles.h"
+#include "sound.h"
 //Due to my goofy-ass 1-cpp-dozen-header project structure, this will work quite well actually.
 constexpr int max_enemy_bullets=20;
 
@@ -16,26 +17,25 @@ struct ENEMY_INIT_LIST_STRUC
     uint8_t preference_state_3=0;//defensive
     uint8_t preference_state_4=0;//dive
     uint8_t preference_state_5=0;//special
+    uint8_t songs=0x10;
 };
 const ENEMY_INIT_LIST_STRUC ENEMY_INIT_LISTS[]={
-    {0xffff00,5,80 ,8+2,19+20*2,35,0,3,0,15},
+    //color ,hp,H,spec,bullets, state probabilities
     //{0x999999,2,80 ,4,4,    7*16+1,0,0,0,15},//His name dave
     //RIP dave. you will be missed. (lore accurate)
-    //color ,hp,H,spec,bullets, state probabilities
     //Our ship keeps blowing up
-    {0xffff00,2,80 ,0,4,         1,1,1,0,15},
-    //dagger ship 
-    {0xAAAAAA,4,80 ,4,7,    5*16+1,4,1,0,5+16},
-    //dagger ship 
-    {0xAAAAAA,4,80 ,4,19,        0,9,1,0,0},
-    //diver
-    {0x11ffff,4,120,1,15,   7*16+0,5,1,5,2},
+    {0xffff00,2,80 ,0,4,         1,1,1,0,15     ,0x10},
+    //diver stats
+    {0x11ffff,4,120,1,15,   7*16+0,5,1,5,2      ,0x40},
+    //dragon/dagger ship 
+    {0xAAAAAA,4,80 ,4,7,    5*16+1,4,1,0,5+16   ,0x23},
+    //{0xAAAAAA,4,80 ,4,19,        0,9,1,0,0      ,},
     //The OwO
-    {0xffaed0,7,40 ,0,19,   0*16+0,5,1,1,4},
+    {0xffaed0,7,40 ,0,19,   0*16+0,5,1,1,4      ,0x40},
     //Introspection
-    {0xFFAA00,2,80 ,2,14+20*12,  5,1,9,0,0},
+    {0xFFAA00,2,80 ,2,14+20*12,  5,1,9,0,0      ,0x23},
     //Our ship keeps blowing up 2
-    {0xffff00,5,80 ,8+2,19+20*2,17,1,1,0,1},
+    {0xffff00,5,80 ,8+2,19+20*2,17,1,1,0,1      ,0x10},
 };
 
 //big array because thou shalt not use malloc/free/new/delete.
