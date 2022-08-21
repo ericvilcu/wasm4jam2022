@@ -7,7 +7,7 @@ CXX = "$(WASI_SDK_PATH)/bin/clang++" --sysroot="$(WASI_SDK_PATH)/share/wasi-sysr
 
 # Optional dependency from binaryen for smaller builds
 #Still doesen't apply it properly :<
-WASM_OPT = C:/Users/ericv/Desktop/wasm4/binaryen109/bin/wasm-opt
+WASM_OPT = wasm-opt
 WASM_OPT_FLAGS = -Oz --zero-filled-memory --strip-producers
 
 # Whether to build for debugging instead of release
@@ -16,7 +16,7 @@ DEBUG = 0
 # Compilation flags
 CFLAGS = -W -Wall -Wextra -Werror -Wno-unused -Wconversion -Wsign-conversion -MMD -MP -fno-exceptions
 ifeq ($(DEBUG), 1)
-	CFLAGS += -DDEBUG -O0 -g
+	CFLAGS +=-DNDEBUG -Oz -flto
 else
 	CFLAGS += -DNDEBUG -Oz -flto
 endif

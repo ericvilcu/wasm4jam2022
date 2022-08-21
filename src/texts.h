@@ -43,7 +43,7 @@ const char* dialogues_unmodifiable[] =
 "1Shut",
 "f",
 "2;w;",
-"1For once I feel\nlike I'm helping by\nfighting someone.",
+"1For once I feel\nlike I'm helping by\ndefeating someone.",
 "1I am now leaving\nrapidly.",
 "f",
 "2Hello traveler!",
@@ -94,12 +94,14 @@ void tutorial(){
     text("Left/Right to steer", 3, 35);
     text("X to shoot.", 3, 45);
     text("Z to lock angle", 3, 55);
-    text(" and side-dash", 3, 65);
+    text(" and dash with", 3, 65);
+    text(" arrow keys.", 3, 75);
+    
     text("Going below the", 3, 85);
     text(" waves gives tempo-", 3, 95);
     text(" -rary immunity", 3, 105);
-    text("<-PvP        story->", 0, 120);
-    text("GOOD LUCK!", 3, 135);
+    text("<-PvP        story->", 0, 125);
+    text("GOOD LUCK!", 3, 145);
 };
 int next_dialogue=0;//should have used a char*. May have lessened the cursed stuff too. a little late now.
 float dialogue_progress=0;

@@ -76,8 +76,8 @@ void doPlayerMovement(uint8_t gamepad,ship& my_ship,uint8_t team=0){
             my_ship.player_shot_cooldown=10;
         }
     }
-
-    if (gamepad & BUTTON_2){    
+    bool brake=false;
+    if (gamepad & BUTTON_2){
         if ((gamepad & BUTTON_RIGHT )&&my_ship.dash_cooldown<0){
             my_ship.dash_cooldown=DASH_COOLDOWN;
             my_ship.shipVelX+=-my_ship.shipRotY*dash_speed;
@@ -90,8 +90,13 @@ void doPlayerMovement(uint8_t gamepad,ship& my_ship,uint8_t team=0){
         }
         if ((gamepad & BUTTON_UP)&&my_ship.dash_cooldown<0){
             my_ship.dash_cooldown=DASH_COOLDOWN;
-            my_ship.shipVelX+=my_ship.shipRotX*dash_speed;
-            my_ship.shipVelY+=my_ship.shipRotY*dash_speed;
+            my_ship.shipVelX+=+my_ship.shipRotX*dash_speed;
+            my_ship.shipVelY+=+my_ship.shipRotY*dash_speed;
+        }
+        if ((gamepad & BUTTON_DOWN)&&my_ship.dash_cooldown<0){
+            my_ship.dash_cooldown=DASH_COOLDOWN;
+            my_ship.shipVelX+=-my_ship.shipRotX*dash_speed;
+            my_ship.shipVelY+=-my_ship.shipRotY*dash_speed;
         }
     }
     else{
@@ -103,8 +108,10 @@ void doPlayerMovement(uint8_t gamepad,ship& my_ship,uint8_t team=0){
             my_ship.shipVelX+=my_ship.shipRotX*speed;
             my_ship.shipVelY+=my_ship.shipRotY*speed;
         }
+        if(gamepad & BUTTON_DOWN)
+            brake=true;
     }
-    ship_physics(my_ship,gamepad & BUTTON_DOWN);
+    ship_physics(my_ship,brake);
 }
 
 
@@ -377,7 +384,7 @@ void start(){
     PALETTE[1] = standard_color_1;
     PALETTE[2] = 0xff0000;
     PALETTE[3] = 0xffffff;
-    sound::switch_track(2);
+    sound::switch_track(-1);
     /*if(abs(sqrt(1.0f)-1.0f)>=1e-2f)trace("FIX sqrt (again)");
     if(abs(sqrt(4.0f)-2.0f)>=1e-2f)trace("FIX sqrt (again)");
     if(abs(sqrt(81.0f)-9.0f)>=1e-2f)trace("FIX sqrt (again)");

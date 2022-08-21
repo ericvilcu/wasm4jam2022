@@ -30,6 +30,21 @@ uint8_t building_side(float x,float y){
     return 0x1;
 }
 
+uint8_t building_smile(float x,float y){
+    float s=pow2(x-0.5f);
+    float emy=4.0f*pow2(abs(x-0.5f)-0.1f)+0.55f;
+    float eMy=0.5f+abs(x-0.5f);
+    y=1.0f-y;
+    if((y<0.25f+s/2.0f)&&(y>0.125f+s)){
+        return 0x0;
+    }
+    if(y>=emy && y<eMy){
+        return 0b10;
+    }
+    return 0x1;
+}
+
+
 typedef uint8_t (*texture)(float x,float y);
 
 float M11ToPixX(float x){

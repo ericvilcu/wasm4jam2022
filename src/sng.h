@@ -6,7 +6,7 @@
 #define TRIANGLE_HUM(f,sus,vol) TRIANGLE_HUM_FLAGS(f,sus,vol,0)
 #define MENACING_DRUM SOUND_FROM(60,60,5,10,0,35,30,20,TONE_NOISE)
 #define NOTE_SQ_LOW(fr,vol) SOUND_FROM(fr,fr,0,0,5,20,1,vol,TONE_PULSE1|TONE_MODE3)
-uint32_t waiting[]{
+const uint32_t waiting[]{
     TRIANGLE_HUM(30,30,90),30,
     TRIANGLE_HUM(40,30,90),30,
     TRIANGLE_HUM(20,30,90),30,
@@ -43,7 +43,7 @@ uint32_t waiting[]{
 #define SNARE_1_FULL SNARE_1,0,SNARE_1_ACC*/
 
 #define SQ_STRAIGHT(fr,sus,vol,chn) SOUND_FROM(fr,fr,0,0,sus,0,0,vol,(chn==0?TONE_PULSE1:TONE_PULSE2)|TONE_MODE2)
-uint32_t smithereens[]={//70 frames per 
+const uint32_t smithereens[]={//70 frames per 
                         //Used for silly fights/fights that you easily win.
 /*Basic drums
     KICK_1,
@@ -320,10 +320,10 @@ uint32_t smithereens[]={//70 frames per
 #define KICK_2_NO_TRI SOUND_FROM(150,150,0,0,0,12,40,40,TONE_NOISE)
 #define SNARE_1_NO_TRI SOUND_FROM(350,345,0,0,10,15,60,20,TONE_NOISE)
 #define BECKON_BPM_SLOW 16
-//I realize this is actually 1/BPM but shush
+//I realize this is actually 60*60/BPM but shush
 #define BECKON_BPM 12
 #define SQ_BACK(fr,sus,vol,chn) SOUND_FROM(fr,fr,0,sus,sus/3,0,1,vol,(chn==0?TONE_PULSE1:TONE_PULSE2)|TONE_MODE3)
-uint32_t beckon_slow[]={//4*8 per.
+const uint32_t beckon_slow[]={//4*8 per.
 
     KICK_2,0,SQ_BACK(50,30,80,1),BECKON_BPM_SLOW,
     KICK_2,BECKON_BPM_SLOW,
@@ -336,7 +336,7 @@ uint32_t beckon_slow[]={//4*8 per.
     HAT_1,BECKON_BPM_SLOW,
 
 };
-uint32_t beckon[]{
+const uint32_t beckon[]{
     KICK_2,0,SQ_BACK(50,30,80,1),BECKON_BPM,
     KICK_2/*,0,SQ_BACK(100,60,80,0)*/,BECKON_BPM,
     SNARE_1,BECKON_BPM,
@@ -453,7 +453,7 @@ uint32_t beckon[]{
 #define WAVES_1 SOUND_FROM(570,340,120,0,0,40,10,10,TONE_NOISE|TONE_MODE3)
 #define SQ_BLEEP(fr,sus,vol,chn) SOUND_FROM(fr,fr,sus,sus/3,0,sus,1,vol,(chn==0?TONE_PULSE1:TONE_PULSE2)|TONE_MODE3)
 
-uint32_t mark[]={
+const uint32_t mark[]={
     SQ_STRAIGHT(300,15,60,0),0,KICK_2,MARK_BPM2,
     SQ_STRAIGHT(200,15,60,0),0,HAT_2,MARK_BPM,
     SQ_STRAIGHT(100,15,60,0),0,KICK_2,MARK_BPM,
@@ -604,7 +604,7 @@ uint32_t mark[]={
 
 #define MARK_BPM_SLOW 7
 #define MARK_BPM_SLOW2 (2*MARK_BPM_SLOW)
-uint32_t chair_spin[]{
+const uint32_t chair_spin[]{
     KICK_2,MARK_BPM_SLOW2,
     HAT_2,MARK_BPM_SLOW,
     KICK_2,MARK_BPM_SLOW,
@@ -618,7 +618,7 @@ uint32_t chair_spin[]{
 #define DWN_BPM2s 2*DWN_BPMs
 #define NOTE_SQ2(fr,vol) SOUND_FROM(fr,fr,0,0,5,20,1,vol,TONE_PULSE1|TONE_MODE1)
 #define HOLD_SQ2(fr,vol) SOUND_FROM(fr,fr,0,0,5,20,1,vol,TONE_PULSE2|TONE_MODE4)
-uint32_t downloading[]{
+const uint32_t downloading[]{
     /*HOLD_SQ2(100,60),0,
     NOTE_SQ2(200,60),DWN_BPM2,
     NOTE_SQ2(300,60),DWN_BPM,
@@ -707,7 +707,7 @@ uint32_t rising[]{
     NOTE_SQ3(500,60),0,SNARE_1,RISING_BPMf2,
     HAT_1,RISING_BPMf2,
 
-    NOTE_SQ3(250,60),0,BACK_SQ3(800,40),0,KICK_2,RISING_BPMf2,
+    NOTE_SQ3(250,60),0,KICK_2,RISING_BPMf2,
     NOTE_SQ3(300,60),0,HAT_1,RISING_BPMf2,
     NOTE_SQ3(400,60),0,SNARE_1,RISING_BPMf2,
     HAT_1,RISING_BPMf2,
@@ -717,7 +717,7 @@ uint32_t rising[]{
     NOTE_SQ3(400,60),0,SNARE_1,RISING_BPMf2,
     HAT_1,RISING_BPMf2,
 
-    NOTE_SQ3(250,60),0,BACK_SQ3(600,40),0,KICK_2,RISING_BPMf2,
+    NOTE_SQ3(250,60),0,KICK_2,RISING_BPMf2,
     NOTE_SQ3(300,60),0,HAT_1,RISING_BPMf2,
     NOTE_SQ3(350,60),0,SNARE_1,RISING_BPMf2,
     HAT_1,RISING_BPMf2,
@@ -726,28 +726,6 @@ uint32_t rising[]{
     NOTE_SQ3(300,60),0,HAT_1,RISING_BPMf2,
     NOTE_SQ3(500,60),0,SNARE_1,RISING_BPMf2,
     HAT_1,RISING_BPMf2,
-
-    
-    NOTE_SQ3(250,60),0,BACK_SQ3(700,40),0,KICK_2,RISING_BPMf2,
-    NOTE_SQ3(300,60),0,HAT_1,RISING_BPMf2,
-    NOTE_SQ3(400,60),0,SNARE_1,RISING_BPMf2,
-    HAT_1,RISING_BPMf2,
-    
-    NOTE_SQ3(250,60),0,KICK_2,RISING_BPMf2,
-    NOTE_SQ3(300,60),0,HAT_1,RISING_BPMf2,
-    NOTE_SQ3(400,60),0,SNARE_1,RISING_BPMf2,
-    HAT_1,RISING_BPMf2,
-
-    NOTE_SQ3(250,60),0,BACK_SQ3(800,40),0,KICK_2,RISING_BPMf2,
-    NOTE_SQ3(300,60),0,HAT_1,RISING_BPMf2,
-    NOTE_SQ3(350,60),0,SNARE_1,RISING_BPMf2,
-    HAT_1,RISING_BPMf2,
-    
-    NOTE_SQ3(250,60),0,KICK_2,RISING_BPMf2,
-    NOTE_SQ3(300,60),0,HAT_1,RISING_BPMf2,
-    NOTE_SQ3(500,60),0,SNARE_1,RISING_BPMf2,
-    HAT_1,RISING_BPMf2,
-
     
     NOTE_SQ3(250,60),RISING_BPMf2,
     NOTE_SQ3(300,60),RISING_BPMf2,
@@ -864,10 +842,14 @@ uint32_t rising[]{
     NOTE_SQ3(300,60),0,HAT_1,RISING_BPMf2,
     NOTE_SQ3(350,60),0,SNARE_1,RISING_BPMf2,
     NOTE_SQ3(300,60),0,HAT_1,RISING_BPMf2,
-    
+
     NOTE_SQ3(250,60),0,KICK_2,RISING_BPMf2,
     NOTE_SQ3(300,60),0,HAT_1,RISING_BPMf2,
     NOTE_SQ3(500,60),0,SNARE_1,RISING_BPMf2,
     NOTE_SQ3(300,60),0,HAT_1,RISING_BPMf2,
 
+    KICK_2,RISING_BPMf2,KICK_2,RISING_BPMf2,
+    SNARE_1,RISING_BPMf2,
+    KICK_2,RISING_BPMf2,KICK_2,RISING_BPMf2,
+    SNARE_1,RISING_BPMf2,KICK_2,RISING_BPMf4,
 };

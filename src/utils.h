@@ -19,7 +19,7 @@
 #define DASH_COOLDOWN 30
 constexpr int HORIZON=140;
 constexpr int WAVES_1_Y=157;
-constexpr int WAVES_2_Y=146;
+constexpr int WAVES_2_Y=144;
 
 
 constexpr float gravity=0.01f/6.0f;
@@ -143,6 +143,9 @@ float sqrt(float x,float error=1e-3f){
 constexpr float COS_ROT=0.99452189536f;
 constexpr float SIN_ROT=0.10452846326f;
 
+constexpr float COS_ROT_HALF=0.99862953475f;
+constexpr float SIN_ROT_HALF=0.05233595624f;
+
 void normalize(float&fx,float&fy){
     float md=sqrt((fx*fx)+(fy*fy));
     fx/=md;
@@ -173,15 +176,41 @@ void rot_minus1(float&fx,float&fy){
     fy=ox*-SIN_ROT+oy*COS_ROT;
     normalize(fx,fy);
 }
-void rot_towards(float&fx,float&fy,float dx,float dy){
+
+void rot_plus1H(float&fx,float&fy){
+    float ox=fx;
+    float oy=fy;
+
+    fx=ox*COS_ROT_HALF+oy*-SIN_ROT_HALF;
+    fy=ox*SIN_ROT_HALF+oy*COS_ROT_HALF;
+    normalize(fx,fy);
+}
+
+void rot_minus1H(float&fx,float&fy){
+    float ox=fx;
+    float oy=fy;
+
+    fx=ox*COS_ROT_HALF+oy*SIN_ROT_HALF;
+    fy=ox*-SIN_ROT_HALF+oy*COS_ROT_HALF;
+    normalize(fx,fy);
+}
+
+void rot_towards_N_E_C(float&fx,float&fy,float dx,float dy){
     //rotate based on the direction of the cross product
     if(abs(dx)+abs(dy)<0.1)return;
     float cross_product_z=dx*fy-dy*fx;
     if(cross_product_z>0.0f)
-        rot_minus1(fx,fy);
+        rot_minus1H(fx,fy);
     else
-        rot_plus1(fx,fy);
+        rot_plus1H(fx,fy);
 }
+
+void rot_towards(float&fx,float&fy,float dx,float dy){
+    //rotate based on the direction of the cross product
+    rot_towards_N_E_C(fx,fy,dx,dy);
+    rot_towards_N_E_C(fx,fy,dx,dy);
+}
+
 int moved(int X,float dX){
     return X+(int)(abs(dX))*(dX>0?1:-1);
 }

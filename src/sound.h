@@ -22,7 +22,7 @@ namespace sound
         3,SOUND_FROM(150,170,5,10,0,35,60,20,TONE_NOISE),//enemy hit
         5,SOUND_FROM(700,50,0,0,0,100,0,75,TONE_NOISE),//water hit
     };
-    uint32_t*track_list[]={
+    const uint32_t*track_list[]={
         waiting,
         smithereens,
         beckon,
@@ -33,7 +33,7 @@ namespace sound
         rising,
     };
     #define track_size(ptr) sizeof(ptr)/(sizeof(uint32_t))
-    int track_lengths[]={
+    const int track_lengths[]={
         //I gave these songs their names before starting to write them
         //Their names are not that fitting.
         track_size(waiting),
@@ -48,7 +48,7 @@ namespace sound
     int current_track=-1;
     int player_pos=0;
     int wait=0;
-    void tone_respect_priority(uint32_t*data,int priority){
+    void tone_respect_priority(const uint32_t*data,int priority){
         int instrument=(int)(data[3]&3);
         //tracef("%d %d %d",tone_time_occupied[instrument],tone_occupied_priority[instrument],priority);
         if(tone_time_occupied[instrument]<=0||tone_occupied_priority[instrument]<=priority){
@@ -79,7 +79,7 @@ namespace sound
     }
     void switch_track(int id,int start_pos=0){
         if(id!=current_track||start_pos!=0){
-            current_track=id;
+            current_track=id%8;
             player_pos=start_pos;
         }
     }

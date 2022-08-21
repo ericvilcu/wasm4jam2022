@@ -38,3 +38,5 @@ We may have little memory, few colors and a small screen, but you know what we D
 I am HEAVILY abusing that and this game may straight up not work on devices with bad CPUs.
 
 Also, please disregard the excessively goofy project structure.
+
+Note: wasm-opt was applied with O3 instead of Oz so it may run faster.

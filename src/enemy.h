@@ -131,7 +131,8 @@ void ship_physics(ship& my_ship,bool brake_on){
         my_ship.waterTime-=1;
         if(my_ship.waterTime<0&&my_ship.iFrames<0){
             my_ship.waterTime=INITIAL_WATER_TIME;
-            sound::sound_effect(sound::WATER_DEATH);
+            if(state=='p'||state=='s')//last-minute patch that is terrible.
+                sound::sound_effect(sound::WATER_DEATH);
             my_ship.hearts-=1;
         }
     }

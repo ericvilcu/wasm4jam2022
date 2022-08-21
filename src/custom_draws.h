@@ -108,9 +108,16 @@ inline void draw_buildings(float TrueCamX){
                 float start_height=0.1f;//CONSTANT! DO NOT CHANGE!!
                 float height=rand_range_seed(-0.2f,-0.9f,RandXS^RandZS);//Close enough.
                 float raster_X0=PixToM11X(S_BPOS);
-                rasterize_quad({raster_X0+posX       ,height,posZ       },{scaleX,0.0f,0.0f   },{0.0f,start_height-height,0.0f},building_side);
-                rasterize_quad({raster_X0+posX       ,height,posZ+scaleZ},{.0f   ,0.0f,-scaleZ},{0.0f,start_height-height,0.0f},building_side);
-                rasterize_quad({raster_X0+posX+scaleX,height,posZ       },{.0f   ,0.0f,scaleZ },{0.0f,start_height-height,0.0f},building_side);
+                if((X&127)==100){
+                    rasterize_quad({raster_X0+posX       ,height,posZ       },{scaleX,0.0f,0.0f   },{0.0f,start_height-height,0.0f},building_smile);
+                    rasterize_quad({raster_X0+posX       ,height,posZ+scaleZ},{.0f   ,0.0f,-scaleZ},{0.0f,start_height-height,0.0f},building_smile);
+                    rasterize_quad({raster_X0+posX+scaleX,height,posZ       },{.0f   ,0.0f,scaleZ },{0.0f,start_height-height,0.0f},building_smile);
+                }
+                else{
+                    rasterize_quad({raster_X0+posX       ,height,posZ       },{scaleX,0.0f,0.0f   },{0.0f,start_height-height,0.0f},building_side);
+                    rasterize_quad({raster_X0+posX       ,height,posZ+scaleZ},{.0f   ,0.0f,-scaleZ},{0.0f,start_height-height,0.0f},building_side);
+                    rasterize_quad({raster_X0+posX+scaleX,height,posZ       },{.0f   ,0.0f,scaleZ },{0.0f,start_height-height,0.0f},building_side);
+                }
             }
         }
         last_best_z=best_z;
@@ -124,7 +131,7 @@ void draw_background(int timestamp,float camX,float TrueCamX){
     rect(0,HORIZON,SCREEN_SIZE,SCREEN_SIZE-HORIZON);
     int anim_frame=((timestamp)/30)&3;
     int first_wave=((int)-camX)%7;
-    int first_wave_2=((int)(-(camX)/1.6f))%7;
+    int first_wave_2=((int)(-(camX)/3.0f))%7;
     //waves that are a little further
     for(int i=first_wave_2;i<SCREEN_SIZE+7;i+=7)
         switch (anim_frame)
