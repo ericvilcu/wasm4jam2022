@@ -29,6 +29,7 @@ For more info about setting up WASM-4, see the [quickstart guide](https://wasm4.
 ## The part the game's programmer wrote
 
 Made for The [WASM4Jam2](https://itch.io/jam/wasm4-v2)
+Play it at https://itch.io/game/edit/1662031
 Additional self-imposed challenges:
 - NO additional libraries
 - NO malloc/free/new/delete. Only static memory+the stack.
