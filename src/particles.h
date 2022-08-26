@@ -95,15 +95,14 @@ void process_particles(float camX,float camY){
             case 1:{
                 x=sumUIM(x,dx,ARENA_SIZE_X*256);
                 y=sumUI(y,dy);
-                //dx=(int)((float)dx*1.2f);
-                //dy=(int)((float)dy*1.2f);
+                dx=(int)((float)dx);
+                dy=(int)((float)dy+5*gravity*1024);
                 int trueX=mod_I((int)(x>>8)-icX,ARENA_SIZE_X);
                 int trueY=((int)(y>>8)+icY);
                 draw_particle(trueX,trueY,color);
                 if(trueY<0 || trueY>SCREEN_SIZE || trueX>SCREEN_SIZE){
                     particles[i].col_type=INVALID_PARTICLE;
                 }
-
                 else{
                     //I wonder if there's a nice optimisation for these 4 lines.
                     particles[i].x=x;
@@ -118,5 +117,16 @@ void process_particles(float camX,float camY){
             case 3:particles[i].col_type=INVALID_PARTICLE;
                 break;
         }
+    }
+}
+int part_rand_val=0;//Too lazy to do better.
+
+void particle_rand_burst(uint8_t clr,float iX,float iY,int count=25,float speed_multiplier=3.0f){
+    while(count--){
+        int rand=(abs((part_rand_val)*148991)%94427)&1023;
+        int rand2=(abs((part_rand_val++)*94427)%148991)&1023;
+        float spdX=speed_multiplier*(1.0f-2.0f*(float)rand/1023.0f);
+        float spdY=speed_multiplier*(1.0f-2.0f*(float)rand2/1023.0f);
+        add_particle(iX,iY,spdX,spdY,clr,1);
     }
 }

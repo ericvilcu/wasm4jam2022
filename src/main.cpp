@@ -61,6 +61,7 @@ void camera_follow(float target){
 }
 void doPlayerMovement(uint8_t gamepad,ship& my_ship,uint8_t team=0){
     if((gamepad & BUTTON_1)&& my_ship.player_shot_cooldown<0){
+        //sound::sound_effect(sound::SOUND_FIRE);
         if(team<2){
             player_bullets[player_bullet_count<<2]=my_ship.shipX;
             player_bullets[(player_bullet_count<<2)|1]=my_ship.shipY;

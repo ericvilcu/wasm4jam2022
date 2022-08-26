@@ -120,7 +120,7 @@ float square_wrap_distance(float x1,float y1,float x2,float y2){
     return 2.0f*min(square_distance(x1,y1,midX,midY),square_distance(x2,y2,midX,midY));
 }
 //https://en.wikipedia.org/wiki/Methods_of_computing_square_roots#A_two-variable_iterative_method
-//Since I'm mostly using this to normalized almost-normal vectors, it is fast.
+//Since I'm mostly using this to normalize almost-normal vectors, it is fast.
 float sqrt(float x,float error=1e-3f){
     if(x<0)return -sqrt(-x,error);//it is a convention,ok?
     if(x>2){

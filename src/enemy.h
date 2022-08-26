@@ -140,6 +140,7 @@ void ship_physics(ship& my_ship,bool brake_on){
 void try_hit_enemy(float X,float Y){
     if(enemy.iFrames<=0&&square_wrap_distance(X,Y,enemy.shipX,enemy.shipY)<8.0f){
         sound::sound_effect(sound::SOUND_ENEMY_HIT);
+        particle_rand_burst(COLOR_ENEMY,enemy.shipX,enemy.shipY);
         enemy.iFrames=20;
         enemy.hearts-=1;
     }
@@ -147,6 +148,7 @@ void try_hit_enemy(float X,float Y){
 void try_hit_enemy_player(float X,float Y){
     if(enemy.iFrames<=0&&square_wrap_distance(X,Y,enemy.shipX,enemy.shipY)<4.0f){
         sound::sound_effect(sound::SOUND_ENEMY_HIT);
+        particle_rand_burst(COLOR_ENEMY,enemy.shipX,enemy.shipY);
         enemy.iFrames=20;
         enemy.hearts-=1;
     }
@@ -159,6 +161,7 @@ void fire_default_enemy_projectile_at(float x,float y,float dx,float dy,int max)
             enemy_projectiles[(i<<2)|1]=y;
             enemy_projectiles[(i<<2)|2]=dx;
             enemy_projectiles[(i<<2)|3]=dy;
+            //sound::sound_effect(sound::SOUND_FIRE);
             break;
         }
     }
@@ -172,6 +175,7 @@ void try_hit_player(float X,float Y){
         player.iFrames=20;
         player.hearts-=1;
         sound::sound_effect(sound::SOUND_PLAYER_HIT);
+        particle_rand_burst(COLOR_PLAYER,player.shipX,player.shipY);
     }
 };
 uint8_t AI_STATE=0;
@@ -218,8 +222,8 @@ void do_ai_tick(int timestamp,int enemy_id){
     switch (AI_STATE)
     {
     case AI_STATE_READYING:{//RESET TO ANOTHER STATE
-        int rand=(timestamp*67391)%12347;
-        int rand2=(timestamp*12347)%67391;
+        int rand=abs(timestamp*67391)%12347;
+        int rand2=abs(timestamp*12347)%67391;
         int sum=(ENEMY_INIT_LISTS[enemy_id].preference_state_1&15)+
                 (ENEMY_INIT_LISTS[enemy_id].preference_state_2&15)+
                 (ENEMY_INIT_LISTS[enemy_id].preference_state_3&15)+

@@ -13,6 +13,7 @@ namespace sound
         SOUND_PLAYER_HIT=1,
         SOUND_ENEMY_HIT=2,
         WATER_DEATH=3,
+        //SOUND_FIRE=4,
     };
     uint32_t basic_sounds[]={
         //freq 1/2,          ,time    (all in seconds*60)                  ,
@@ -21,6 +22,8 @@ namespace sound
         3,SOUND_FROM(300,80,0,0,15,0,60,40,TONE_NOISE),//player hit
         3,SOUND_FROM(150,170,5,10,0,35,60,20,TONE_NOISE),//enemy hit
         5,SOUND_FROM(700,50,0,0,0,100,0,75,TONE_NOISE),//water hit
+        //2,SOUND_FROM(200,10,0,25,0,0,60,5,TONE_TRIANGLE),//fire
+        //eugh
     };
     const uint32_t*track_list[]={
         waiting,

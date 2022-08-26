@@ -16,7 +16,7 @@ DEBUG = 0
 # Compilation flags
 CFLAGS = -W -Wall -Wextra -Werror -Wno-unused -Wconversion -Wsign-conversion -MMD -MP -fno-exceptions
 ifeq ($(DEBUG), 1)
-	CFLAGS +=-DNDEBUG -Oz -flto
+	CFLAGS += -DNDEBUG -Oz -flto
 else
 	CFLAGS += -DNDEBUG -Oz -flto
 endif
