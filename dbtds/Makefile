@@ -6,7 +6,6 @@ CC = "$(WASI_SDK_PATH)/bin/clang" --sysroot="$(WASI_SDK_PATH)/share/wasi-sysroot
 CXX = "$(WASI_SDK_PATH)/bin/clang++" --sysroot="$(WASI_SDK_PATH)/share/wasi-sysroot"
 
 # Optional dependency from binaryen for smaller builds
-#Still doesen't apply it properly :<
 WASM_OPT = wasm-opt
 WASM_OPT_FLAGS = -Oz --zero-filled-memory --strip-producers
 
@@ -16,7 +15,7 @@ DEBUG = 0
 # Compilation flags
 CFLAGS = -W -Wall -Wextra -Werror -Wno-unused -Wconversion -Wsign-conversion -MMD -MP -fno-exceptions
 ifeq ($(DEBUG), 1)
-	CFLAGS += -DNDEBUG -Oz -flto
+	CFLAGS += -DDEBUG -O0 -g
 else
 	CFLAGS += -DNDEBUG -Oz -flto
 endif
@@ -34,8 +33,17 @@ OBJECTS = $(patsubst src/%.c, build/%.o, $(wildcard src/*.c))
 OBJECTS += $(patsubst src/%.cpp, build/%.o, $(wildcard src/*.cpp))
 DEPS = $(OBJECTS:.o=.d)
 
-ifeq ($(OS), Windows_NT)
-	MKDIR_BUILD = if not exist build md build
+ifeq '$(findstring ;,$(PATH))' ';'
+    DETECTED_OS := Windows
+else
+    DETECTED_OS := $(shell uname 2>/dev/null || echo Unknown)
+    DETECTED_OS := $(patsubst CYGWIN%,Cygwin,$(DETECTED_OS))
+    DETECTED_OS := $(patsubst MSYS%,MSYS,$(DETECTED_OS))
+    DETECTED_OS := $(patsubst MINGW%,MSYS,$(DETECTED_OS))
+endif
+
+ifeq ($(DETECTED_OS), Windows)
+	MKDIR_BUILD = mkdir -p build
 	RMDIR = rd /s /q
 else
 	MKDIR_BUILD = mkdir -p build

@@ -1,4 +1,4 @@
-# jam2022
+# Trials of the dark sea
 
 A game written in C++ for the [WASM-4](https://wasm4.org) fantasy console.
 
@@ -29,11 +29,7 @@ For more info about setting up WASM-4, see the [quickstart guide](https://wasm4.
 ## The part the game's programmer wrote
 
 Made for The [WASM4Jam2](https://itch.io/jam/wasm4-v2)
-Play it at https://itch.io/game/edit/1662031
-Additional self-imposed challenges:
-- NO additional libraries
-- NO malloc/free/new/delete. Only static memory+the stack.
-- Only wasm functions used: text,rect, Most sprites are drawn programmatically;
+Play it at https://ericvilcu.itch.io/trials-of-the-dark-sea
 
 We may have little memory, few colors and a small screen, but you know what we DO have? CPU speed.
 I am HEAVILY abusing that and this game may straight up not work on devices with bad CPUs.
