@@ -1,14 +1,16 @@
 #include <stdint.h>
-#define POSOF(song) ((int)(START_NOTE-&RawNotes::song+1))
-#define balig 0b1111
-#define POSOFASSERT(song) static_assert((((int)POSOF(song))&balig) == 0)
+#define byteAlgin 4
+#define byteAlginMask ((1<<byteAlgin)-1) 
+#define POSOFFULL(song) ((int)(START_NOTE-&RawNotes::song))
+#define POSOF(song) (((POSOFFULL(song) >> 4)+1))
+#define POSOFASSERT(song) static_assert((((int)POSOFFULL(song))&byteAlgin) == 0)
 #define FROMPOS(dat) ((uint8_t*)(START_NOTE+(dat)-1))
 
 #define POSOFTRK(song) ((int)(START_TRACK-&TrackData::song::c1))
 #define FROMPOSTRK(dat) ((void*)(START_TRACK+(dat)))
-#define NOSONG (-1+(char*)&RawNotes::song)
+#define NOSONG 0
 
-#define FREQ(freq) ((byte)(freq))
+#define FREQ(freq) ((uint8_t)(freq))
 #define NONOTE 0 
 namespace RawNotes{
     #define START_NOTE (&RawNotes::beep1)
@@ -54,7 +56,7 @@ namespace TrackData{
     }
     void* process_fork(void* dat, int flags){
         int8_t*data = (int8_t*) dat;
-        if((flags&(*(int8_t*)dat))|((*(int8_t*)dat)>>3) == 0)
+        if((flags&(*(int8_t*)dat))==0 && (flags|((*(int8_t*)dat)>>3)) == 0b111)
             return FROMPOSTRK(data[1]);
         return FROMPOSTRK(data[2]);
     }

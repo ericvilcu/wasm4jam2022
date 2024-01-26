@@ -1,23 +1,9 @@
 #pragma once
 #include "utils.h"
 #include "wasm4.h"
+#include "position.h"
 
-
-void setPixel(uint8_t clr,int x,int y){
-    //Too safe?
-    //no.
-    //bloody inefficient, but we have CPU speed more than anything else.
-    if(x>SCREEN_SIZE_MINUS_1 || x<0 || y>SCREEN_SIZE_MINUS_1 || y<0)
-        return;
-    int offset=((x&3)<<1);
-    int idx=SCREEN_SIZE_x_BYTES*y+(x>>2);
-    uint8_t initial=FRAMEBUFFER[idx];
-    initial^=initial&(3<<offset);
-    initial|=(clr)<<offset;
-    FRAMEBUFFER[idx]=initial;
-}
-
-void switchPixelIfBackground(int x,int y){
+inline void switchPixelIfBackground(int x,int y){
     if(x>SCREEN_SIZE_MINUS_1 || x<0 || y>SCREEN_SIZE_MINUS_1 || y<0)
         return;
     int offset=((x&3)<<1);
@@ -29,7 +15,7 @@ void switchPixelIfBackground(int x,int y){
     }
 }
 
-void drawLine(uint8_t clr,int start_x,int start_y,int end_x,int end_y){
+inline void drawLine(uint8_t clr,int start_x,int start_y,int end_x,int end_y){
     bool bias=false;
     if(abs(start_x-end_x)<abs(start_y-end_y)){
         if(start_y>end_y){
@@ -80,7 +66,7 @@ void drawLine(uint8_t clr,int start_x,int start_y,int end_x,int end_y){
     }
 }
 
-void maybe_draw_indicator(int i_loc_x,int i_loc_y,uint8_t color,int strength=1){
+inline void maybe_draw_indicator(int i_loc_x,int i_loc_y,uint8_t color,int strength=1){
     if(i_loc_x<0||i_loc_x>=SCREEN_SIZE||i_loc_y<0||i_loc_y>=SCREEN_SIZE){
         if(i_loc_y<0||i_loc_y>=SCREEN_SIZE){
             int sg=(i_loc_y<0?1:-1);
@@ -128,8 +114,23 @@ void maybe_draw_indicator(int i_loc_x,int i_loc_y,uint8_t color,int strength=1){
     }
 }
 
+inline void draw_faceLine(int i_loc_x, int i_loc_y, float fx, float fy, uint8_t clr1){
+    float cfx=-fy;
+    float cfy=fx;
+    int tipX=moved(i_loc_x,fx*7.0f);
+    int tipY=moved(i_loc_y,fy*7.0f);
+
+    int leftX =moved(i_loc_x, cfx*2.9f + fx*6.0f);
+    int leftY =moved(i_loc_y, cfy*2.9f + fy*6.0f);
+    int rightX=moved(i_loc_x,-cfx*2.9f - fx*6.0f);
+    int rightY=moved(i_loc_y,-cfy*2.9f - fy*6.0f);
+
+    drawLine(clr1,tipX,tipY,leftX,leftY);
+    drawLine(clr1,tipX,tipY,rightX,rightY);
+}
+
 //TODO: redo draw call
-void draw_ship(float camera_pos_x,float camera_pos_y,float x,float y,float fx,float fy,char colors,bool indicators=true){
+inline void draw_ship(float camera_pos_x,float camera_pos_y,float x,float y,float fx,float fy,char colors,bool indicators=true, bool faceLine=true){
     uint8_t clr2=colors&3;
     uint8_t clr1=(colors&12)>>2;
     //normalize(fx,fy);redundant.
@@ -140,8 +141,10 @@ void draw_ship(float camera_pos_x,float camera_pos_y,float x,float y,float fx,fl
     float loc_y=y-camera_pos_y;
     int i_loc_x=(int)loc_x;
     int i_loc_y=(int)loc_y;
-    if(indicators)//wh
+    if(indicators)
         maybe_draw_indicator(i_loc_x,i_loc_y,clr1);
+    if(faceLine)
+        draw_faceLine(i_loc_x, i_loc_y, fx, fy, clr1);
     if(!(loc_x<SHIP_OFFSCREEN_MIN||loc_x>SHIP_OFFSCREEN_MAX||loc_y<SHIP_OFFSCREEN_MIN||loc_y>SHIP_OFFSCREEN_MAX)){
         //7x7
         //shape:cap
@@ -149,10 +152,10 @@ void draw_ship(float camera_pos_x,float camera_pos_y,float x,float y,float fx,fl
         //direction: towards movement.
         //~3 pixels towards move direction
         //~2 pixels in each movement direction
-        int tipX=moved(i_loc_x,fx*3.9f);
-        int tipY=moved(i_loc_y,fy*3.9f);
-        int leftX=moved(i_loc_x,cfx*2.9f);
-        int leftY=moved(i_loc_y,cfy*2.9f);
+        int tipX  =moved(i_loc_x, fx *3.9f);
+        int tipY  =moved(i_loc_y, fy *3.9f);
+        int leftX =moved(i_loc_x, cfx*2.9f);
+        int leftY =moved(i_loc_y, cfy*2.9f);
         int rightX=moved(i_loc_x,-cfx*2.9f);
         int rightY=moved(i_loc_y,-cfy*2.9f);
         drawLine(clr1,tipX,tipY,i_loc_x,i_loc_y);
@@ -194,7 +197,7 @@ void draw_ship(float camera_pos_x,float camera_pos_y,float x,float y,float fx,fl
 }
 
 //TODO: Redo draw call
-void draw_bullet(float camera_pos_x,float camera_pos_y,float x,float y,float fx,float fy,uint8_t color){
+inline void draw_bullet(float camera_pos_x,float camera_pos_y,float x,float y,float fx,float fy,uint8_t color){
     float loc_x=fmodf(x-camera_pos_x,ARENA_SIZE_X);
     float loc_y=y-camera_pos_y;
     int i_loc_x=(int)loc_x;
@@ -208,7 +211,7 @@ void draw_bullet(float camera_pos_x,float camera_pos_y,float x,float y,float fx,
     drawLine(color,i_loc_x,i_loc_y,trailX,trailY);
 }
 
-/*void draw_particle(int x,int y,uint8_t color){
+/*inline void draw_particle(int x,int y,uint8_t color){
     //TODO: REDO?
     if(camY==0.0f){
         if(color&2)
@@ -218,7 +221,7 @@ void draw_bullet(float camera_pos_x,float camera_pos_y,float x,float y,float fx,
     }
 }*/
 
-void draw_hearts(int num,bool team){
+inline void draw_hearts(int num,bool team){
     uint8_t clr=(team?COLOR_PLAYER:COLOR_ENEMY);
     for(int i=0;i<num;++i){
         int posX=(team?3+i*7:SCREEN_SIZE-11-i*7);
