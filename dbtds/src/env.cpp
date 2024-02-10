@@ -1,3 +1,3 @@
 #include "env.h"
-Position CameraPosition;
+FakeVector2 CameraPosition;
 int frame;

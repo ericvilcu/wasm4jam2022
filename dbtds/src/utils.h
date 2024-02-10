@@ -1,18 +1,18 @@
 #pragma once
 #include "wasm4.h"
+
+#define ARENA_SIZE 256
+#define HALF_ARENA_SIZE (ARENA_SIZE/2)
 #define SCREEN_SIZE_MINUS_1 ((int)(SCREEN_SIZE-1))
 #define SCREEN_SIZE_x_BYTES ((int)(SCREEN_SIZE/4))
-#define COLOR_BACKGROUND 0b00//Brightness should be low
-#define COLOR_BACKGROUND_ACCENT 0b01//Brightness should be medium-low. high saturation.
-#define COLOR_PLAYER 0b10//Note:Yellow? to see the player better?
-#define COLOR_ENEMY 0b11//Note to self: ALWAYS BRIGHT
-#define WATER_Y 160
+#define COLOR_BACKGROUND 0b00
+#define COLOR_BACKGROUND_ACCENT 0b01
+#define COLOR_PLAYER 0b10
+#define COLOR_ENEMY 0b11
 #define DYNAMIC_FALLOFF_THRESHOLD 2.0f
 
 #define ALL_PLAYER_COLORS 0b1011
 #define ALL_ENEMY_COLORS 0b1110
-#define ARENA_SIZE_X 200
-#define HALF_ARENA_SIZE_X (ARENA_SIZE_X/2)
 #define fSCREEN_SIZE ((float)SCREEN_SIZE)
 #define BULLET_INVALID -3.40282347E38f
 #define INITIAL_WATER_TIME 300
@@ -21,18 +21,11 @@
 
 constexpr float gravity=0.01f/6.0f;
 constexpr float speed=0.01f;
-constexpr float dash_speed=1.000f;
-constexpr float falloff=0.997f;
+constexpr float dash_speed=4.000f;
+constexpr float falloff=0.98f;
 constexpr float brake=0.90f;
 constexpr float BULLET_START_SPEED=1.0f;
-/*template<T>
-T max(T a,T b){
-    return (a>b?a:b);
-}
-template<T>
-T min(T a,T b){
-    return (a<b?a:b);
-}*/
+
 inline int mod_I(int x,int mx){
     int md=x%mx;
     if(md<0)return mx+md;
@@ -74,8 +67,8 @@ inline float clamp(float x,float mn,float mx){
 inline int clampI(int x,int mn,int mx){
     return (x<mn?mn:(x>mx?mx:x));
 }
-inline int abs(int x){
-    return (x>0?x:-x);
+inline unsigned int abs(int x){
+    return (unsigned int)(x>0?x:-x);
 }
 inline float abs(float x){
     return (x>0?x:-x);
@@ -87,7 +80,7 @@ inline float fmodf(float x,float mx){
 }
 
 inline float looped_polar_opposite(float pos){
-    return fmodf(pos+(float)HALF_ARENA_SIZE_X,(float)ARENA_SIZE_X);
+    return fmodf(pos+(float)HALF_ARENA_SIZE,(float)ARENA_SIZE);
 }
 /**
  * returns w/ magnitude.
@@ -95,17 +88,17 @@ inline float looped_polar_opposite(float pos){
 inline float best_looped_dir(float pos,float target){
     //both are 0..ARENA_SIZE_X-1
     float dx=target-pos;
-    if(abs(dx)<=HALF_ARENA_SIZE_X)
+    if(abs(dx)<=HALF_ARENA_SIZE)
         return dx;
-    else return ((float)-sign(dx))*(((float)ARENA_SIZE_X)-abs(dx));
+    else return ((float)-sign(dx))*(((float)ARENA_SIZE)-abs(dx));
 }
 inline float best_middle_wrap(float x1,float x2){
     float dx=x1-x2;
     float avg=(x1+x2)/2.0f;
-    if(abs(dx)<=HALF_ARENA_SIZE_X)
+    if(abs(dx)<=HALF_ARENA_SIZE)
         return avg;
     else
-        return fmodf(avg+(float)HALF_ARENA_SIZE_X,(float)ARENA_SIZE_X);
+        return fmodf(avg+(float)HALF_ARENA_SIZE,(float)ARENA_SIZE);
 }
 inline float square_distance(float x1,float y1,float x2,float y2){
     return pow2(x1-x2)+pow2(y1-y2);

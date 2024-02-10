@@ -1,4 +1,4 @@
 #include "utils.h"
 #include "position.h"
-extern Position CameraPosition;
+extern FakeVector2 CameraPosition;
 extern int frame;

@@ -1,60 +1,83 @@
 #pragma once
 #include "utils.h"
-struct Position{
-    typedef unsigned int FkFLT;
+//NOTE: I am using integer overflow intentionally.
+#define FakeBitShift 24
+#define ToFakeMagnitude ((float)(1<<FakeBitShift))
+#define ToRealMagnitude (1.0f/ToFakeMagnitude)
+struct FakeVector2{
+    typedef int FkFLT;
+    static_assert(sizeof(FkFLT)==4);
     FkFLT x, y;
-    inline Position() = default;
-    inline Position(FkFLT x, FkFLT y):x{x},y{y}{};
-    inline Position(float x, float y):x{fake(x)},y{fake(y)}{};
-    static inline float real(FkFLT d) { return (float)d*0x1p-12f; }
-    static inline FkFLT fake(float d) { return (FkFLT)(d*0x1p12f); }
-    inline Position& normalize(){
+    inline FakeVector2() = default;
+    inline FakeVector2(FkFLT x, FkFLT y):x{x},y{y}{};
+    inline FakeVector2(float x, float y):x{fake(x)},y{fake(y)}{};
+    static inline float real(FkFLT d) { return (float)d*ToRealMagnitude; }
+    inline void ToCamera(const FakeVector2& camera, int& outX, int& outY) const {
+        int x = this->x-camera.x;
+        int y = this->y-camera.y;
+        outX = (int)((unsigned int)x>>FakeBitShift);
+        outY = (int)((unsigned int)y>>FakeBitShift);
+    }
+    static inline FkFLT fake(float d) { return (FkFLT)(d*ToFakeMagnitude); }
+    static inline FkFLT fakeI(int d) { return (FkFLT)(d<<FakeBitShift); }
+    inline bool squareHits(float size = 0.5f){
+        return (unsigned long long)abs(x)+abs(y)<=(unsigned long long) fake(size);
+    }
+    inline FakeVector2 operator+(const FakeVector2& ot) const {
+        return FakeVector2(x+ot.x,y+ot.y);
+    }
+    inline FakeVector2 operator-(const FakeVector2& ot) const {
+        return FakeVector2(x-ot.x,y-ot.y);
+    }
+    inline FakeVector2 operator*(const FakeVector2& ot) const {
+        return FakeVector2((FkFLT)(((long long)x*ot.x)>>FakeBitShift),(FkFLT)(((long long)y*ot.y)>>FakeBitShift));
+    }
+    inline FakeVector2 operator*(float v) const {
+        FkFLT fk = fake(v);
+        FkFLT X=(FkFLT)(((long long)x*fk)>>FakeBitShift);
+        FkFLT Y=(FkFLT)(((long long)y*fk)>>FakeBitShift);
+        return FakeVector2(X,Y);
+    }
+    inline FakeVector2 closestVectorTo(const FakeVector2& target) const{
+        return target-*this;
+    }
+    inline FakeVector2 fromTopRightCornerToCenter() const{
+        return FakeVector2(x+((SCREEN_SIZE/2)<<FakeBitShift),y+((SCREEN_SIZE/2)<<FakeBitShift));
+    }
+
+    // operations that cause mutations
+    inline FakeVector2& normalize(){
         //working with fixed-point shit sounds like a pain...
         float rx=real(x),ry=real(y);
         ::normalize(rx,ry);
         x=fake(rx);y=fake(ry);
         return *this;
     }
-    inline Position operator+(const Position& ot){
-        return Position(x+ot.x,y+ot.y);
-    }
-    inline Position operator-(const Position& ot){
-        return Position(x-ot.x,y-ot.y);
-    }
-    inline Position operator*(const Position& ot){
-        return Position((FkFLT)(((unsigned long long)x*ot.x)>>24),(FkFLT)(((unsigned long long)y*ot.y)>>24));
-    }
-    inline Position operator*(float v){
+    inline FakeVector2& decelerate(float v){
         FkFLT fk = fake(v);
-        FkFLT X=(FkFLT)(((unsigned long long)x*fk)>>24);
-        FkFLT T=(FkFLT)(((unsigned long long)y*fk)>>24);
-        return Position(x,y);
-    }
-    inline Position& decelerate(float v){
-        FkFLT fk = fake(v);
-        x=(FkFLT)(((unsigned long long)x*fk)>>24);
-        y=(FkFLT)(((unsigned long long)y*fk)>>24);
+        x=(FkFLT)(((long long)x*fk)>>FakeBitShift);
+        y=(FkFLT)(((long long)y*fk)>>FakeBitShift);
         return *this;
     }
-    inline Position& rot1(){
+    inline FakeVector2& rot1(){
         float xr = real(x);float yr = real(y);
         rot_plus1(xr,yr);
         x=fake(xr);y=fake(yr);
         return *this;
     }
-    inline Position& rotMinus1(){
+    inline FakeVector2& rotMinus1(){
         float xr = real(x);float yr = real(y);
         rot_minus1(xr,yr);
         x=fake(xr);y=fake(yr);
         return *this;
     }
-    inline Position& rot1H(){
+    inline FakeVector2& rot1H(){
         float xr = real(x);float yr = real(y);
         rot_plus1H(xr,yr);
         x=fake(xr);y=fake(yr);
         return *this;
     }
-    inline Position& rotMinus1H(){
+    inline FakeVector2& rotMinus1H(){
         float xr = real(x);float yr = real(y);
         rot_minus1H(xr,yr);
         x=fake(xr);y=fake(yr);
@@ -70,6 +93,8 @@ inline void setPixel(uint8_t clr,int x,int y){
     //Too safe?
     //no.
     //bloody inefficient, but we have CPU speed more than anything else.
+    x&=255;
+    y&=255;
     if(!isInScreen(x,y))
         return;
     int offset=((x&3)<<1);
