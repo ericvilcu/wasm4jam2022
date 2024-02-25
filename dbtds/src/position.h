@@ -4,6 +4,7 @@
 #define FakeBitShift 24
 #define ToFakeMagnitude ((float)(1<<FakeBitShift))
 #define ToRealMagnitude (1.0f/ToFakeMagnitude)
+
 struct FakeVector2{
     typedef int FkFLT;
     static_assert(sizeof(FkFLT)==4);
@@ -21,7 +22,7 @@ struct FakeVector2{
     static inline FkFLT fake(float d) { return (FkFLT)(d*ToFakeMagnitude); }
     static inline FkFLT fakeI(int d) { return (FkFLT)(d<<FakeBitShift); }
     inline bool squareHits(float size = 0.5f){
-        return (unsigned long long)abs(x)+abs(y)<=(unsigned long long) fake(size);
+        return max((int)abs(x),(int)abs(y))<=fake(size);
     }
     inline FakeVector2 operator+(const FakeVector2& ot) const {
         return FakeVector2(x+ot.x,y+ot.y);
@@ -59,27 +60,9 @@ struct FakeVector2{
         y=(FkFLT)(((long long)y*fk)>>FakeBitShift);
         return *this;
     }
-    inline FakeVector2& rot1(){
+    inline FakeVector2& rot(uint8_t rot_type){
         float xr = real(x);float yr = real(y);
-        rot_plus1(xr,yr);
-        x=fake(xr);y=fake(yr);
-        return *this;
-    }
-    inline FakeVector2& rotMinus1(){
-        float xr = real(x);float yr = real(y);
-        rot_minus1(xr,yr);
-        x=fake(xr);y=fake(yr);
-        return *this;
-    }
-    inline FakeVector2& rot1H(){
-        float xr = real(x);float yr = real(y);
-        rot_plus1H(xr,yr);
-        x=fake(xr);y=fake(yr);
-        return *this;
-    }
-    inline FakeVector2& rotMinus1H(){
-        float xr = real(x);float yr = real(y);
-        rot_minus1H(xr,yr);
+        rotate(xr,yr,rot_type);
         x=fake(xr);y=fake(yr);
         return *this;
     }

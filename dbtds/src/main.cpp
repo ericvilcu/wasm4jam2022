@@ -24,7 +24,7 @@ int losses=0;
 int aux=0;
 
 void update () {
-    //frame is used mostly for random numbers and such
+    //frame is not used currently :.
     frame=frame+1;
 #if ENABLE_GAMEPLAY
     switch (state)
@@ -48,38 +48,42 @@ void update () {
             clearBullets();
             float x = -(float)(SCREEN_SIZE/2);
             CameraPosition = FakeVector2(x,-(float)(SCREEN_SIZE/2));
-            auto p1 = entities[0].ship.init(1,FakeVector2((float)0,(float)0),FakeVector2((float)1,(float)0));
-            auto p2 = entities[1].ship.init(2,FakeVector2((float)0,(float)0),FakeVector2((float)-1,(float)0));
-            aux=61;
+            auto p1 = entities[0].ship.init(1,FakeVector2((float) 10,(float)0),FakeVector2((float) 1,(float)0));
+            auto p2 = entities[1].ship.init(2,FakeVector2((float)-10,(float)0),FakeVector2((float)-1,(float)0));
+            auto ent = entities[2].ability.randInit();
+            aux=120;
+            song::switchTrack(0);
+            song::switchTrack(song::PvP);
         }
     case MULTIPLAYER_321:
         //3, 2, 1, GO!
-        drawShip(0);drawShip(1);
-        if(aux>40)text("3",(SCREEN_SIZE-8*1)/2,80-4);
-        else if(aux>20)text("2",(SCREEN_SIZE-8*1)/2,80-4);
+        processEntities(false);
+        if(aux>80)text("3",(SCREEN_SIZE-8*1)/2,80-4);
+        else if(aux>40)text("2",(SCREEN_SIZE-8*1)/2,80-4);
         else if(aux>0)text("1",(SCREEN_SIZE-8*1)/2,80-4);
         else if(aux>-20){
             *DRAW_COLORS = 0x23;
             text("!",(SCREEN_SIZE-8*1)/2,80-4);
             *DRAW_COLORS = 0x03;
-            processShip(0);processShip(1);
         }
         aux--;
         if(aux>-20)break;
         else state = MULTIPLAYER_GO;
     case MULTIPLAYER_GO: 
         CameraFollowEntities();
-        processParticles();
-        processBullets();
-        processShip(0);processShip(1);
+        processEntities();
+        if(entities[2].positional.type==0 && (random::randomInt()&31) == 0) entities[2].ability.randInit();
+        if(entities[1].ship.hp<=1)song::setFlag(1);else song::unSetFlag(1);
+        if(entities[0].ship.hp<=1)song::setFlag(2);else song::unSetFlag(2);
+        if(entities[1].ship.hp+entities[0].ship.hp<=4)song::setFlag(0);else song::unSetFlag(0);
+        
         if(entities[0].ship.hp<=0){losses+=1;state = MULTIPLAYER_RECAP;aux = 240;}
         if(entities[1].ship.hp<=0){progression+=1;state = MULTIPLAYER_RECAP;aux = 240;}
         break;
     case MULTIPLAYER_RECAP:
         aux--;
-        drawShip(0);drawShip(1);
-        processBullets(false);
-        processParticles(false);
+        song::switchTrack(0);
+        processEntities(false,false);
         char txt[30];
         if(aux<180){
             *DRAW_COLORS = 0x14;
@@ -112,15 +116,6 @@ void update () {
     default:
         text("UNIMPLEMENTED", (SCREEN_SIZE-8*13)/2, 80-4);
         break;
-    
-        //Add players.
-        {
-            float x = -(float)(SCREEN_SIZE/2);
-            CameraPosition = FakeVector2(x,-(float)(SCREEN_SIZE/2));
-            auto p1 = entities[0].ship.init(1,FakeVector2((float)0,(float)0),FakeVector2((float)1,(float)0));
-            auto p2 = entities[1].ship.init(2,FakeVector2((float)0,(float)0),FakeVector2((float)-1,(float)0));
-            aux=61;
-        }
     }
     
 #endif
@@ -136,10 +131,14 @@ void saveUnlocks(){
 void start(){
     PALETTE[0] = SEA;
     PALETTE[1] = SEA_VARIATION;
-    PALETTE[2] = CAPTAIN;
+    PALETTE[2] = CAPTAIN_COLOR;
     PALETTE[3] = SACRIFICE;
 #if ENABLE_MUSIC
-    song::switchTrack(0);
+    song::switchTrack(1);
+#endif
+#if MUSIC_TEST_MODE
+    song::switchTrack(4);
+    *song::flag()=0b10111000;
 #endif
     diskr(&SAV,1);
 }

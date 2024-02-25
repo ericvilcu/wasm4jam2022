@@ -12,6 +12,8 @@ namespace song
 
     uint8_t flags=0b11110000;
     int corSng=0;
+    void* currentSegment;
+    uint8_t segmentProgress;
     uint8_t* flag(){
         return &flags;
     }
@@ -25,15 +27,34 @@ namespace song
         return ((flags>>i)&1)==1;
     }
     void switchTrack(int id){
-        corSng=id;
+        if(corSng!=id){
+            corSng=id;
+            if(id>0){
+                flags = SongData::songs[id-1]>>8;
+                currentSegment = FROMPOSTRK(SongData::songs[id-1]&255);
+                segmentProgress = 0;
+            }
+        }
     }
     void process()
     {
 #if MUSIC_TEST_MODE
         musicChosoer();
 #endif
-        if(corSng==0)
+        if(corSng==0||currentSegment==(void*)0)
             return;
+        
+        bool playedFrame=false;
+        do
+        {
+            auto type = TrackData::type(currentSegment);
+            if(type==TrackData::FORK){
+                currentSegment = TrackData::process_fork(currentSegment,flags);
+            } else /*if(type==TrackData::TRACK3)*/{
+                playedFrame = true;
+                currentSegment = TrackData::process_track3(currentSegment,flags,segmentProgress);
+            }
+        } while (!playedFrame&&(currentSegment!=(void*)0));
     }
 
 #if MUSIC_TEST_MODE
@@ -53,22 +74,38 @@ namespace song
         if(A)cflag = (cflag+1)%8;
         if(Z)setFlag(cflag);
         if(X)unSetFlag(cflag);
-        char msg[]="SONG  = 00\n"
-                   "FLAGS = 00000000\n"
-                   "SELECT=         \n"
-                   "LEGEND  SsPNL123";
-        msg[ 8]+=(corSng/10);
-        msg[ 9]+=(corSng%10);
-        msg[26]+=((flags>>0)&1);
-        msg[25]+=((flags>>1)&1);
-        msg[24]+=((flags>>2)&1);
-        msg[23]+=((flags>>3)&1);
-        msg[22]+=((flags>>4)&1);
-        msg[21]+=((flags>>5)&1);
-        msg[20]+=((flags>>6)&1);
-        msg[19]+=((flags>>7)&1);
-        msg[43-cflag]='A';
-        text(msg,15,15);
+        char msg0[]="SONG  = 00\0";
+        char msg1[]="FLAGS = 00000000\0";
+        char msg2[]="SELECT=         \0";
+        char msg3[]="LEGEND  SsPNL321\0";
+        msg0[ 8]+=(corSng/10);
+        msg0[ 9]+=(corSng%10);
+        msg1[15]+=((flags>>0)&1);
+        msg1[14]+=((flags>>1)&1);
+        msg1[13]+=((flags>>2)&1);
+        msg1[12]+=((flags>>3)&1);
+        msg1[11]+=((flags>>4)&1);
+        msg1[10]+=((flags>>5)&1);
+        msg1[ 9]+=((flags>>6)&1);
+        msg1[ 8]+=((flags>>7)&1);
+        msg2[15-cflag]='A';
+        text(msg0,15,15+8*1);
+        text(msg1,15,15+8*2);
+        text(msg2,15,15+8*3);
+        text(msg3,15,15+8*4);
+        if(song::corSng==0)text("(silence)",15,12);
+        //if(song::corSng==1)text("Captain's pride",15,12);
+        //if(song::corSng==2)text("Captain's fears",15,12);
+        //if(song::corSng==3)text("Captain's brawn",15,12);
+        if(cflag==0)text("Flag 1 (f_1)\nUser flag.\nControls song flow\n\nTypically,\nrepresents how \nintense the\nbattle is.",15,15+8*5+5);
+        if(cflag==1)text("Flag 2 (f_2)\nUser flag.\nControls song flow\n\nTypically,\n1 if player 1 is \nclose to winning, 0\notherwise.",15,15+8*5+5);
+        if(cflag==2)text("Flag 3 (f_3)\nUser flag.\nControls song flow\n\nTypically,\n1 if player 2 (or\nan enemy) is\nclose to winning,\n0 otherwise.",15,15+8*5+5);
+        if(cflag==3)text("Flag 4 (f_L)\nStrength flag.\n\nSet to 1 for\nhigher bpm.",15,15+8*5+5);
+        if(cflag==4)text("Flag 5 (f_N)\nNoise flag.\n\nSet to 0 to\ndisable the\nnoise channel.\n(used for drums)",15,15+8*5+5);
+        if(cflag==5)text("Flag 6 (f_P)\nPulse flag.\n\nSet to 0 to\ndisable the\npulse channel.\n(used for drums)",15,15+8*5+5);
+        if(cflag==6)text("Flag 7 (f_s)\nSquare 1 flag.\n\nSet to 0 to\ndisable the\nsquare 1 channel.\n(usually main\nmotif)",15,15+8*5+5);
+        if(cflag==7)text("Flag 8 (f_S)\nSquare 2 flag.\n\nSet to 0 to\ndisable the\nsquare 2 channel.\n(usually\ndroning/ambient)",15,15+8*5+5);
+
         lastGP=*GAMEPAD1;
     }
 #endif

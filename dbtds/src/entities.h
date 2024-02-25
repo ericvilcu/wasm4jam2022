@@ -27,14 +27,20 @@ struct PlayerShip:public EntityWithPosition{
         //NOTE: speed must never be 0 at start which is a strange contrivance I will abide by
         facing.normalize();
         dash_cooldown = 0;
-        ability_state = 0;
+        ability_state = -1;
         return this;
     }
+};
+
+struct SpecialAbility:public EntityWithPosition{
+    int ability;
+    SpecialAbility* randInit();
 };
 
 union entity{
     EntityWithPosition positional;
     PlayerShip ship;
+    SpecialAbility ability;
 };
 
 struct bullet{
@@ -55,7 +61,7 @@ enum particleFlags{
     F_COLOR2 = 2<<F_COLOR_SHIFT,
     F_COLOR3 = 3<<F_COLOR_SHIFT,
     F_COLOR_MASK = 3<<F_COLOR_SHIFT,
-    F_COLOR_SWITCH_BACKGROUND = 1<<4,
+    F_COLOR_SWITCH = 1<<4,
     F_TYPE1 = 1<<0,
     F_TYPE2 = 2<<0,
     F_TYPE3 = 3<<0,
@@ -67,6 +73,13 @@ enum bulletFlags{
     B_COLOR2 = 2,
     B_COLOR3 = 3,
     B_COLOR_MASK = 3,
+    B_TYPE0 = 0,
+    B_TYPE1 = 4,
+    B_TYPE2 = 8,
+    B_TYPE3 = 4|8,
+    B_TYPE_MASK = 4|8,
+    B_USER_OFFSET = 4,
+    B_L_LIFETIME_OFFSET=5,
 };
 extern bullet particles[MAX_PARTICLES];
 
@@ -77,9 +90,11 @@ void CameraFollow(const FakeVector2& p,float factor=0.1f);
 void processBullets(bool move=true);
 void processParticles(bool move=true);
 void clearBullets();
-void processEntity(int i);
+void processEntities(bool move=true, bool particles=true);
+void processEntity(int i, bool move=true);
 void drawShip(int i);
-void processShip(int i);
+void processShip(int i, bool move=true);
+void collisionShip(int i);
 inline void deleteEntity(int i){entities[i].positional.type = 0;};
 
 void ParticleBurst(int num, FakeVector2 pos, FakeVector2 speed, int flags, float spdMul=4.0f);

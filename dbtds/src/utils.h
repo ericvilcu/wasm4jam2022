@@ -129,11 +129,6 @@ inline float sqrt(float x,float error=1e-3f){
     }
     return a;
 }
-constexpr float COS_ROT=0.99452189536f;
-constexpr float SIN_ROT=0.10452846326f;
-
-constexpr float COS_ROT_HALF=0.99862953475f;
-constexpr float SIN_ROT_HALF=0.05233595624f;
 
 inline void normalize(float&fx,float&fy){
     float md=sqrt((fx*fx)+(fy*fy));
@@ -148,50 +143,24 @@ inline void normalize_squareify(float&fx,float&fy){
     normalize(fx,fy);
 }
 
-inline void rot_plus1(float&fx,float&fy){
-    float ox=fx;
-    float oy=fy;
-
-    fx=ox*COS_ROT+oy*-SIN_ROT;
-    fy=ox*SIN_ROT+oy*COS_ROT;
-    normalize(fx,fy);
-}
-
-inline void rot_minus1(float&fx,float&fy){
-    float ox=fx;
-    float oy=fy;
-
-    fx=ox*COS_ROT+oy*SIN_ROT;
-    fy=ox*-SIN_ROT+oy*COS_ROT;
-    normalize(fx,fy);
-}
-
-inline void rot_plus1H(float&fx,float&fy){
-    float ox=fx;
-    float oy=fy;
-
-    fx=ox*COS_ROT_HALF+oy*-SIN_ROT_HALF;
-    fy=ox*SIN_ROT_HALF+oy*COS_ROT_HALF;
-    normalize(fx,fy);
-}
-
-inline void rot_minus1H(float&fx,float&fy){
-    float ox=fx;
-    float oy=fy;
-
-    fx=ox*COS_ROT_HALF+oy*SIN_ROT_HALF;
-    fy=ox*-SIN_ROT_HALF+oy*COS_ROT_HALF;
-    normalize(fx,fy);
-}
+enum RotationType{
+    ROT_NORMAL_C=0,//C = clock-wise
+    ROT_NORMAL_T=1,//T = trigonometrically
+    ROT_HALF_C=2,
+    ROT_HALF_T=3,
+    ROT_NINETY_PERCENT_C=4,
+    ROT_NINETY_PERCENT_T=5,
+};
+void rotate(float&fx, float&fy, uint8_t idx);
 
 inline void rot_towards_N_E_C(float&fx,float&fy,float dx,float dy){
     //rotate based on the direction of the cross product
     if(abs(dx)+abs(dy)<0.1)return;
     float cross_product_z=dx*fy-dy*fx;
     if(cross_product_z>0.0f)
-        rot_minus1H(fx,fy);
+        rotate(fx,fy,2);
     else
-        rot_plus1H(fx,fy);
+        rotate(fx,fy,3);
 }
 
 inline void rot_towards(float&fx,float&fy,float dx,float dy){
@@ -207,11 +176,3 @@ inline int moved(int X,float dX){
 #define SHIP_SIZE 7
 #define SHIP_OFFSCREEN_MIN ((int)(-SHIP_SIZE))
 #define SHIP_OFFSCREEN_MAX ((int)(SCREEN_SIZE+SHIP_SIZE))
-
-inline char* itoa(int x,char*t){
-    if(x>10){
-        t=itoa(x/10,t);
-    }
-    *t='0'+(x%10);
-    return t+1;
-}

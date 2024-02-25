@@ -2,19 +2,18 @@
 #include "utils.h"
 #include "wasm4.h"
 #include "position.h"
+#include "random.h"
 
 namespace custom_draws
 {
-    inline void switchPixelIfBackground(int x,int y){
+    inline void switchPixel(int x,int y){
         if(x>SCREEN_SIZE_MINUS_1 || x<0 || y>SCREEN_SIZE_MINUS_1 || y<0)
             return;
         int offset=((x&3)<<1);
         int idx=SCREEN_SIZE_x_BYTES*y+(x>>2);
         uint8_t initial=FRAMEBUFFER[idx];
-        if((initial&(2<<offset))!=0){
-            uint8_t swapped=initial^(uint8_t)(1<<offset);
-            FRAMEBUFFER[idx]=swapped;
-        }
+        uint8_t swapped=initial^(uint8_t)(1<<offset);
+        FRAMEBUFFER[idx]=swapped;
     }
 
     inline void drawLine(uint8_t clr,int start_x,int start_y,int end_x,int end_y){
@@ -85,19 +84,22 @@ namespace custom_draws
                     }
                 }
                 else{
-                    setPixel(color,ci_loc_x  ,SCREEN_SIZE_MINUS_1-1);
+                    setPixel(color,ci_loc_x  ,SCREEN_SIZE_MINUS_1);
                     if(strength==1)
                         setPixel(color,ci_loc_x  ,SCREEN_SIZE_MINUS_1-2);
-                    setPixel(color,ci_loc_x  ,SCREEN_SIZE_MINUS_1);
-                    setPixel(color,ci_loc_x+1,SCREEN_SIZE_MINUS_1);
-                    setPixel(color,ci_loc_x-1,SCREEN_SIZE_MINUS_1);
-
-                    setPixel(color,ci_loc_x  ,1);
+                    if(strength>=0){
+                        setPixel(color,ci_loc_x  ,SCREEN_SIZE_MINUS_1-1);
+                        setPixel(color,ci_loc_x+1,SCREEN_SIZE_MINUS_1);
+                        setPixel(color,ci_loc_x-1,SCREEN_SIZE_MINUS_1);
+                    }
+                    setPixel(color,ci_loc_x  ,0);
                     if(strength==1)
                         setPixel(color,ci_loc_x  ,2);
-                    setPixel(color,ci_loc_x  ,0);
-                    setPixel(color,ci_loc_x+1,0);
-                    setPixel(color,ci_loc_x-1,0);
+                    if(strength>=0){
+                        setPixel(color,ci_loc_x  ,1);
+                        setPixel(color,ci_loc_x+1,0);
+                        setPixel(color,ci_loc_x-1,0);
+                    }
                 }
             }
             else{//if (loc_x<0||loc_x>=SCREEN_SIZE){
@@ -105,17 +107,21 @@ namespace custom_draws
                 //left
                 if(strength==1)
                     setPixel(color,2,i_loc_y);
-                setPixel(color,1,i_loc_y);
                 setPixel(color,0,i_loc_y);
-                setPixel(color,0,i_loc_y-1);
-                setPixel(color,0,i_loc_y+1);
+                if(strength>=0){
+                    setPixel(color,0,i_loc_y-1);
+                    setPixel(color,0,i_loc_y+1);
+                    setPixel(color,1,i_loc_y);
+                }
                 //right
                 if(strength==1)
                     setPixel(color,SCREEN_SIZE_MINUS_1-2,i_loc_y);
-                setPixel(color,SCREEN_SIZE_MINUS_1-1,i_loc_y);
                 setPixel(color,SCREEN_SIZE_MINUS_1,i_loc_y);
-                setPixel(color,SCREEN_SIZE_MINUS_1,i_loc_y-1);
-                setPixel(color,SCREEN_SIZE_MINUS_1,i_loc_y+1);
+                if(strength>=0){
+                    setPixel(color,SCREEN_SIZE_MINUS_1-1,i_loc_y);
+                    setPixel(color,SCREEN_SIZE_MINUS_1,i_loc_y-1);
+                    setPixel(color,SCREEN_SIZE_MINUS_1,i_loc_y+1);
+                }
             }
         }
     }
@@ -136,7 +142,7 @@ namespace custom_draws
     }
 
 
-    inline void draw_ship(int i_loc_x, int i_loc_y, float fx, float fy, char colors,bool indicators=true, bool faceLine=true){
+    inline void draw_ship(int i_loc_x, int i_loc_y, float fx, float fy, char colors, bool center=true, bool indicators=true, bool faceLine=true){
         uint8_t clr2=colors&3;
         uint8_t clr1=(colors&12)>>2;
         //normalize(fx,fy);redundant.
@@ -194,11 +200,71 @@ namespace custom_draws
             
             //center AKA the part that takes damage
             //deepest lore: It's usually the color of whoever they're communicating with using the ship's devices, because that's the color they see on their screens.
-            setPixel(clr2,i_loc_x,i_loc_y);
+            if(center)setPixel(clr2,i_loc_x,i_loc_y);
         }
     }
 
-    //TODO: Redo draw call
+    
+    inline void drawLineDbl(uint8_t clr,int start_x,int start_y,int end_x,int end_y){
+        drawLine(clr,start_x,start_y,end_x,end_y);
+        drawLine(clr,end_x,end_y,start_x,start_y);
+    }
+
+    inline void draw_laser(int i_loc_x,int i_loc_y, float fx,float fy, uint8_t color, float power=0.0f, bool active=false){
+        maybe_draw_indicator(i_loc_x,i_loc_y,color,0);
+        float cfx=-fy;
+        constexpr float thickness = 7.0f;
+        constexpr float thickness_radar = 0.4f;
+        constexpr int length = 100;
+        constexpr int tip_length = 25;
+        float cfy=fx;
+        if(active)
+        {
+            int llx=moved(i_loc_x,fx*(float)0.0f/2.0f),lly=moved(i_loc_y,fy*(float)0.0f/2.0f);
+            float q=power;
+            for(int i=0;i<length;++i){
+                if(i>length-tip_length)q=power*(float)(length-i)/(float)tip_length;
+                int FX=moved(i_loc_x,fx*(float)i);
+                int FY=moved(i_loc_y,fy*(float)i);
+                //TODO: FX-RX and others are almost always the same... do something about it?
+                int RX=moved(FX, cfx*q*thickness);
+                int RY=moved(FY, cfy*q*thickness);
+                int LX=moved(FX,-cfx*q*thickness);
+                int LY=moved(FY,-cfy*q*thickness);
+                drawLineDbl(color,RX,RY,LX,LY);
+                if(llx!=FX&&lly!=FY){
+                    RX=moved(FX , cfx*q*thickness);
+                    RY=moved(lly, cfy*q*thickness);
+                    LX=moved(FX ,-cfx*q*thickness);
+                    LY=moved(lly,-cfy*q*thickness);
+                    drawLineDbl(color,RX,RY,LX,LY);
+                    RX=moved(llx, cfx*q*thickness);
+                    RY=moved(FY , cfy*q*thickness);
+                    LX=moved(llx,-cfx*q*thickness);
+                    LY=moved(FY ,-cfy*q*thickness);
+                    drawLineDbl(color,RX,RY,LX,LY);
+                }
+                llx=FX;lly=FY;
+            }
+        }
+        else
+        {
+            float q=power*0.8f;
+            float p=(1.0f-power)*thickness_radar;
+            for(int i=0;i<(int)(q*(float)(length-(int)(tip_length/3))/3.0f);++i){
+                int FX=moved(i_loc_x,fx*(float)i*3);
+                int FY=moved(i_loc_y,fy*(float)i*3);
+
+                int RX=moved(FX, cfx*((float)i*p+q)*thickness);
+                int RY=moved(FY, cfy*((float)i*p+q)*thickness);
+                int LX=moved(FX,-cfx*((float)i*p+q)*thickness);
+                int LY=moved(FY,-cfy*((float)i*p+q)*thickness);
+
+                drawLine(color,RX,RY,LX,LY);
+            }
+        }
+    }
+
     inline void draw_bullet(int i_loc_x,int i_loc_y, float fx,float fy, uint8_t color){
         maybe_draw_indicator(i_loc_x,i_loc_y,color,0);
         for(int i=-1;i<=1;++i)
@@ -220,7 +286,7 @@ namespace custom_draws
     }*/
 
     inline void draw_hearts(int num,bool team){
-        uint8_t clr=(team?COLOR_PLAYER:COLOR_ENEMY);
+        uint8_t clr=(team?COLOR_ENEMY:COLOR_PLAYER);
         for(int i=0;i<num;++i){
             int posX=(team?3+i*7:SCREEN_SIZE-11-i*7);
             drawLine(clr,posX+1,10,posX+4,3);
@@ -228,5 +294,52 @@ namespace custom_draws
             drawLine(clr,posX+0,10,posX+2,6);
             drawLine(clr,posX+7,10,posX+5,6);
         }
+    }
+
+    inline void boxContour(int i_loc_x,int i_loc_y, uint8_t radius, uint8_t clr){
+        drawLine(clr,i_loc_x-radius,i_loc_y-radius,i_loc_x-radius,i_loc_y+radius);
+        drawLine(clr,i_loc_x-radius,i_loc_y+radius,i_loc_x+radius,i_loc_y+radius);
+        drawLine(clr,i_loc_x+radius,i_loc_y+radius,i_loc_x+radius,i_loc_y-radius);
+        drawLine(clr,i_loc_x+radius,i_loc_y-radius,i_loc_x-radius,i_loc_y-radius);
+    }
+
+    inline void draw_ability(int i_loc_x,int i_loc_y, int type){
+        boxContour(i_loc_x,i_loc_y,5,COLOR_BACKGROUND_ACCENT);
+        boxContour(i_loc_x,i_loc_y,4,COLOR_BACKGROUND);
+        boxContour(i_loc_x,i_loc_y,3,COLOR_BACKGROUND_ACCENT);
+        boxContour(i_loc_x,i_loc_y,2,COLOR_BACKGROUND);
+        boxContour(i_loc_x,i_loc_y,1,COLOR_BACKGROUND_ACCENT);
+        setPixel(COLOR_BACKGROUND,i_loc_x,i_loc_y);
+        if(type==0){
+            boxContour(i_loc_x,i_loc_y,4,COLOR_PLAYER);
+            boxContour(i_loc_x-2,i_loc_y-2,1,COLOR_ENEMY);
+            boxContour(i_loc_x-1,i_loc_y+3,1,COLOR_ENEMY);
+            boxContour(i_loc_x+3,i_loc_y,1,COLOR_ENEMY);
+        }
+        else if(type==1){
+            boxContour(i_loc_x,i_loc_y,4,COLOR_ENEMY);
+            drawLine(COLOR_PLAYER,i_loc_x-3,i_loc_y-4,i_loc_x+3,i_loc_y+4);
+            drawLine(COLOR_PLAYER,i_loc_x-4,i_loc_y-4,i_loc_x+2,i_loc_y+4);
+            drawLine(COLOR_PLAYER,i_loc_x-2,i_loc_y-4,i_loc_x+4,i_loc_y+4);
+        }
+        else if(type==2){
+            boxContour(i_loc_x,i_loc_y,4,COLOR_ENEMY);
+            drawLine(COLOR_PLAYER,i_loc_x+0,i_loc_y  ,i_loc_x+1,i_loc_y+4);
+            drawLine(COLOR_PLAYER,i_loc_x-2,i_loc_y+4,i_loc_x-2,i_loc_y);
+            drawLine(COLOR_PLAYER,i_loc_x+3,i_loc_y+4,i_loc_x+3,i_loc_y);
+            drawLine(COLOR_PLAYER,i_loc_x  ,i_loc_y-4,i_loc_x+0,i_loc_y);
+            drawLine(COLOR_PLAYER,i_loc_x  ,i_loc_y-4,i_loc_x-2,i_loc_y);
+            drawLine(COLOR_PLAYER,i_loc_x  ,i_loc_y-4,i_loc_x+3,i_loc_y);
+        }
+        else if(type==3){
+            boxContour(i_loc_x,i_loc_y,4,COLOR_ENEMY);
+            boxContour(i_loc_x,i_loc_y,3,COLOR_PLAYER);
+            boxContour(i_loc_x,i_loc_y,2,COLOR_ENEMY);
+            boxContour(i_loc_x,i_loc_y,1,COLOR_PLAYER);
+        }
+
+        maybe_draw_indicator(i_loc_x,i_loc_y,COLOR_PLAYER,1);
+        maybe_draw_indicator(i_loc_x,i_loc_y,COLOR_BACKGROUND_ACCENT,0);
+        maybe_draw_indicator(i_loc_x,i_loc_y,COLOR_ENEMY,-1);
     }
 } // namespace custom_draws
