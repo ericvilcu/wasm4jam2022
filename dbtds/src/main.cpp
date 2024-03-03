@@ -75,7 +75,7 @@ void update () {
         if(entities[2].positional.type==0 && (random::randomInt()&31) == 0) entities[2].ability.randInit();
         if(entities[1].ship.hp<=1)song::setFlag(1);else song::unSetFlag(1);
         if(entities[0].ship.hp<=1)song::setFlag(2);else song::unSetFlag(2);
-        if(entities[1].ship.hp+entities[0].ship.hp<=4)song::setFlag(0);else song::unSetFlag(0);
+        if(min(entities[1].ship.hp,entities[0].ship.hp)<=2)song::setFlag(0);else song::unSetFlag(0);
         
         if(entities[0].ship.hp<=0){losses+=1;state = MULTIPLAYER_RECAP;aux = 240;}
         if(entities[1].ship.hp<=0){progression+=1;state = MULTIPLAYER_RECAP;aux = 240;}
@@ -97,7 +97,7 @@ void update () {
                 text(c,80-16-4-8*l++,80-4);
                 sc/=10;
             }while (sc>0);
-            l=0;sc=losses/10;
+            l=0;sc=progression/10;
             while (sc>0){l++;sc/=10;}
             sc=progression;
             *DRAW_COLORS = 0x13;
@@ -138,7 +138,7 @@ void start(){
 #endif
 #if MUSIC_TEST_MODE
     song::switchTrack(4);
-    *song::flag()=0b10111000;
+    *song::flag()=0b11111000;
 #endif
     diskr(&SAV,1);
 }

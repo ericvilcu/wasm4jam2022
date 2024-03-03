@@ -37,4 +37,5 @@ namespace song
     void unSetFlag(int flagno);
     void switchTrack(int id);
     void process();
+    void play_sound(uint8_t idx);
 } // namespace song

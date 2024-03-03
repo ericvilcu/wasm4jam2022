@@ -6,6 +6,11 @@
 //NOTE: contains data despite being a header.
 #include <stdint.h>
 #include "wasm4.h"
+namespace song
+{
+    extern uint8_t occupancy[4];
+} // namespace song
+
 #define byteAlgin 4
 #define byteAlginMask ((1<<byteAlgin)-1) 
 #define POSOFFULL(song) ((int)((uint8_t*)&RawNotes::song-START_NOTE))
@@ -95,14 +100,6 @@ namespace RawNotes{
         HOLD(70),HOLD(70),HOLD(70),HOLD(70),
     };
     ValidateTrackSize(pvp321);
-    
-    uint8_t beep_humble[]={
-        FREQ(25),NONOTE,FREQ(25),NONOTE,
-        FREQ(45),NONOTE,FREQ(25),NONOTE,
-        FREQ(25),NONOTE,FREQ(25),NONOTE,
-        FREQ(55),NONOTE,NONOTE  ,NONOTE,
-    };
-    ValidateTrackSize(beep_humble);
 
     uint8_t heartbeat[]={
         KICK  ,NONOTE,NONOTE,NONOTE,
@@ -112,6 +109,14 @@ namespace RawNotes{
     };
     ValidateTrackSize(heartbeat);
     
+    uint8_t heartbeat2[]={
+        KICK  ,NONOTE,NONOTE,  KICK,
+        SNARE ,NONOTE,SNARE ,  KICK,
+        KICK  ,KICK  ,SNARE ,  KICK,
+        SNARE ,NONOTE,NONOTE,NONOTE,
+    };
+    ValidateTrackSize(heartbeat2);
+
     uint8_t drone2[]={
         FREQ( 5),FREQ( 5),FREQ( 5),FREQ( 5),
         FREQ( 5),FREQ( 5),FREQ( 5),FREQ( 5),
@@ -119,12 +124,26 @@ namespace RawNotes{
         FREQ(15),FREQ(15),FREQ(15),FREQ(15),
     };
     ValidateTrackSize(drone2);
+    uint8_t drone2Variant[]={
+        FREQ( 5),FREQ( 5),FREQ(15),FREQ(15),
+        FREQ( 5),FREQ( 5),FREQ( 5),FREQ( 5),
+        FREQ(15),FREQ(15),FREQ( 5),FREQ( 5),
+        FREQ(15),FREQ(15),FREQ(15),FREQ(15),
+    };
+    ValidateTrackSize(drone2Variant);
+    uint8_t drone2Variant2[]={
+        FREQ( 5),FREQ( 5),HOLD(15),FREQ(15),
+        FREQ( 5),FREQ( 5),FREQ( 5),FREQ( 5),
+        HOLD(15),FREQ(15),FREQ( 5),FREQ( 5),
+        FREQ(20),FREQ(20),FREQ(20),FREQ(20),
+    };
+    ValidateTrackSize(drone2Variant2);
 };
 
 namespace TrackData{
     #define fork2(name,a,b,yesFlag,noFlag) namespace name{\
         uint8_t c[]={\
-            0b10000000+(noFlag)+((yesFlag)<<3),\
+            0b10000000|(noFlag)|((yesFlag)<<3),\
             POSOFTRK(a),\
             POSOFTRK(b) \
             };\
@@ -150,19 +169,33 @@ namespace TrackData{
     //Captain's fear/brawn
     track3NOINIT(captain_fast);
     track3NOINIT(captain_breakdown);
-    fork2(intensityCheck,captain_breakdown,captain_fast,f_1,f_3);
+    fork2(intensityCheck,captain_breakdown,captain_fast,0,f_3);
     track3(captain_breakdown,break1,drone1,kicking2,captain_fast,16);
     track3(captain_fast,beep1,drone1,kicking1,intensityCheck,16);
     
     //PvP
-    track3NOINIT(PvP_humble);
+    track3NOINIT(PvP_humble1);
+    track3NOINIT(PvP_humble2);
+    track3NOINIT(PvP_transition);
     track3NOINIT(PvP_grudge);
-    fork2(PvPLoop2,PvP_grudge,PvP_grudge,0,f_2|f_3);
-    fork2(PvPLoop1,PvPLoop2,PvP_humble,f_1,0);
-    track3(PvP_humble,NO_NOTE,drone2,heartbeat,PvPLoop1,16);
-    track3(PvP_grudge,beep_humble,drone2,heartbeat,PvP_humble,16);
+    track3NOINIT(PvP_waning);
+    track3NOINIT(PvP_grudge2);
+    track3NOINIT(PvP_waning2);
+    
+    fork2(PvPLoopGrudge1,PvP_waning,PvP_grudge,0,f_2|f_3);
+    fork2(PvPLoopGrudge2,PvP_waning2,PvP_grudge2,0,f_2|f_3);
+    fork2(PvPLoopHumble1,PvP_transition,PvP_humble1,f_1,0);
+    fork2(PvPLoopHumble2,PvP_transition,PvP_humble2,f_1,0);
 
-    track3(PvP_start,pvp321,pvp321,NO_NOTE,PvP_humble,16);
+    track3(PvP_humble1,NO_NOTE,drone2,heartbeat,PvPLoopHumble2,16);
+    track3(PvP_humble2,NO_NOTE,drone2Variant,heartbeat,PvPLoopHumble1,16);
+    track3(PvP_transition,NO_NOTE,NO_NOTE,heartbeat2,PvPLoopGrudge1,16);
+    track3(PvP_grudge,drone2Variant,drone2,heartbeat,PvPLoopGrudge2,16);
+    track3(PvP_waning,drone2,drone2Variant,NO_NOTE,PvPLoopGrudge2,16);
+    track3(PvP_grudge2,drone2Variant2,drone2,heartbeat,PvPLoopGrudge1,16);
+    track3(PvP_waning2,drone2,drone2Variant2,NO_NOTE,PvPLoopGrudge1,16);
+
+    track3(PvP_start,pvp321,pvp321,NO_NOTE,PvP_humble1,16);
     
     
     
@@ -174,9 +207,12 @@ namespace TrackData{
     }
     void* process_fork(void* dat, uint8_t flags){
         int8_t*data = (int8_t*) dat;
-        tracef("%f %f %f %f",(float)(flags&3),(float)(7&(*(int8_t*)dat)),(float)(7&((*(int8_t*)dat)>>3)),
-        (float)(int)((flags&7&(*(int8_t*)dat))==0 && (flags&(7&((*(int8_t*)dat)>>3))) != 0));
-        if((flags&7&(*(int8_t*)dat))==0 && (flags&(7&((*(int8_t*)dat)>>3))) != 0)
+        int8_t yesFlags = 7&(data[0]>>3);
+        int8_t noFlags = 7&data[0];
+        tracef("%f %f %f cond = %f %f %f",(float)(flags&7),(float)yesFlags,(float)noFlags,
+        (float)(int)((flags&noFlags)==0),(float)(int)((flags&yesFlags)==yesFlags),
+        (float)(int)((flags&noFlags)==0 && (flags&yesFlags)==yesFlags));
+        if((flags&noFlags)==0 && (flags&yesFlags)==yesFlags)
             return FROMPOSTRK(data[1]);
         return FROMPOSTRK(data[2]);
     }
@@ -194,21 +230,23 @@ namespace TrackData{
             auto square1 = FROMPOS(data[0]);
             uint32_t realFreq = (uint32_t)(square1[position]&127)*7;
             bool hold = (square1[position]&128)>0;
-            if((flags&f_s)&&realFreq!=0)tone(realFreq,durFlag+(hold?1:0),VOLFORFR(realFreq),TONE_PULSE1);
+            if((flags&f_s)&&realFreq!=0&&song::occupancy[0]==0)
+                tone(realFreq,durFlag+(hold?1:0),VOLFORFR(realFreq),TONE_PULSE1);
         }
         if(data[1]!=0){
             auto square2 = FROMPOS(data[1]);
             uint32_t realFreq = (uint32_t)(square2[position]&127)*7;
             bool hold = (square2[position]&128)>0;
-            if((flags&f_S)&&realFreq!=0)tone(realFreq,durFlag+(hold?1:0),VOLFORFR(realFreq),TONE_PULSE2|TONE_MODE4);
+            if((flags&f_S)&&realFreq!=0&&song::occupancy[1]==0)
+                tone(realFreq,durFlag+(hold?1:0),VOLFORFR(realFreq),TONE_PULSE2|TONE_MODE4);
         }
         //for drums, we have a segment for that.
         if(data[2]!=0){
             int idx = FROMPOS(data[2])[position];
             if(idx>0){
                 idx--;
-                if(flags&f_N)tone(RawNotes::configDrum[idx*8+0],RawNotes::configDrum[idx*8+1],RawNotes::configDrum[idx*8+2],RawNotes::configDrum[idx*8+3]);
-                if(flags&f_P)tone(RawNotes::configDrum[idx*8+4],RawNotes::configDrum[idx*8+5],RawNotes::configDrum[idx*8+6],RawNotes::configDrum[idx*8+7]);
+                if((flags&f_N)&&song::occupancy[2]==0)tone(RawNotes::configDrum[idx*8+0],RawNotes::configDrum[idx*8+1],RawNotes::configDrum[idx*8+2],RawNotes::configDrum[idx*8+3]);
+                if((flags&f_P)&&song::occupancy[3]==0)tone(RawNotes::configDrum[idx*8+4],RawNotes::configDrum[idx*8+5],RawNotes::configDrum[idx*8+6],RawNotes::configDrum[idx*8+7]);
             }
         }
         position++;

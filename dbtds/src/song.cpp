@@ -7,13 +7,14 @@
 namespace song
 {
 #if MUSIC_TEST_MODE
-    void musicChosoer();
+    void musicChooser();
 #endif
 
     uint8_t flags=0b11110000;
     int corSng=0;
     void* currentSegment;
     uint8_t segmentProgress;
+    uint8_t occupancy[4]={0,0,0,0};
     uint8_t* flag(){
         return &flags;
     }
@@ -36,10 +37,22 @@ namespace song
             }
         }
     }
+    
+    
+    void play_sound(uint8_t idx){
+        uint32_t* config = &RawNotes::configDrum[idx*8];
+        int id = config[3]&3;
+        //NOTE: ((uint32_t)(atk)<<24)+((uint32_t)(decay)<<16)+(uint32_t)(sus)+((uint32_t)(rel)<<8)
+        occupancy[config[3]&3] = (config[2]&255)+((config[2]>>24)&255)+((config[2]>>16)&255);//atk + sustain + decay
+        tone(config[0],config[1],config[2],config[3]);
+    }
+
     void process()
     {
+        for(int i=0;i<4;++i)
+            occupancy[i]=min(occupancy[i],(uint8_t)(occupancy[i]-1));
 #if MUSIC_TEST_MODE
-        musicChosoer();
+        musicChooser();
 #endif
         if(corSng==0||currentSegment==(void*)0)
             return;
@@ -60,7 +73,7 @@ namespace song
 #if MUSIC_TEST_MODE
     uint8_t lastGP=0;
     int cflag=0;
-    void musicChosoer(){
+    void musicChooser(){
         uint8_t DOWN = (lastGP ^ *GAMEPAD1) & *GAMEPAD1;
         bool Z=(DOWN&BUTTON_1    )!=0;
         bool X=(DOWN&BUTTON_2    )!=0;
@@ -94,11 +107,12 @@ namespace song
         text(msg2,15,15+8*3);
         text(msg3,15,15+8*4);
         if(song::corSng==0)text("(silence)",15,12);
-        //if(song::corSng==1)text("Captain's pride",15,12);
-        //if(song::corSng==2)text("Captain's fears",15,12);
-        //if(song::corSng==3)text("Captain's brawn",15,12);
+        if(song::corSng==1)text("Captain's pride",15,12);
+        if(song::corSng==2)text("Captain's fears",15,12);
+        if(song::corSng==3)text("Captain's brawn",15,12);
+        if(song::corSng==4)text("PvP",15,12);
         if(cflag==0)text("Flag 1 (f_1)\nUser flag.\nControls song flow\n\nTypically,\nrepresents how \nintense the\nbattle is.",15,15+8*5+5);
-        if(cflag==1)text("Flag 2 (f_2)\nUser flag.\nControls song flow\n\nTypically,\n1 if player 1 is \nclose to winning, 0\notherwise.",15,15+8*5+5);
+        if(cflag==1)text("Flag 2 (f_2)\nUser flag.\nControls song flow\n\nTypically,\n1 if player 1 is \nclose to winning,\n0 otherwise.",15,15+8*5+5);
         if(cflag==2)text("Flag 3 (f_3)\nUser flag.\nControls song flow\n\nTypically,\n1 if player 2 (or\nan enemy) is\nclose to winning,\n0 otherwise.",15,15+8*5+5);
         if(cflag==3)text("Flag 4 (f_L)\nStrength flag.\n\nSet to 1 for\nhigher bpm.",15,15+8*5+5);
         if(cflag==4)text("Flag 5 (f_N)\nNoise flag.\n\nSet to 0 to\ndisable the\nnoise channel.\n(used for drums)",15,15+8*5+5);

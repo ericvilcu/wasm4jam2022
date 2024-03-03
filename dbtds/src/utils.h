@@ -61,6 +61,9 @@ inline float min(float x,float y){
 inline int min(int x,int y){
     return (x<y?x:y);
 }
+inline uint8_t min(uint8_t x,uint8_t y){
+    return (x<y?x:y);
+}
 inline float clamp(float x,float mn,float mx){
     return min(max(x,mn),mx);
 }
