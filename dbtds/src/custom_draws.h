@@ -3,7 +3,7 @@
 #include "wasm4.h"
 #include "position.h"
 #include "random.h"
-
+#include "env.h"
 namespace custom_draws
 {
     inline void switchPixel(int x,int y){
@@ -342,4 +342,136 @@ namespace custom_draws
         maybe_draw_indicator(i_loc_x,i_loc_y,COLOR_BACKGROUND_ACCENT,0);
         maybe_draw_indicator(i_loc_x,i_loc_y,COLOR_ENEMY,-1);
     }
+
+#if ALLOW_EFFECTS
+    inline void processEffect(){
+        int screen_byte_length = SCREEN_SIZE >>2;
+        int mode = ::effect_type>>24;
+        int time = ::effect_type & 0b111111111111111111111111;
+        int shift=0;
+        int fake_time = time;
+        switch (mode){
+            case 3:
+            custom_draws::drawLine(1,0,0,160,160);
+            custom_draws::drawLine(1,160,0,0,160);
+        }
+        //for(int i=min(160,time)-1;i>=0;--i){
+        for(int i=0;i<min(160,time);i++){
+            //tracef("%f",(float)i);
+            int bop = (fake_time & 0b110101)^0b000101;
+            bool bpp = 0==(1&(bop ^ (bop>>2)^ (bop>>4)^ (bop>>5)));
+            
+            switch (mode)
+            {
+                case 0:{
+                    shift=10-(int)abs(((i-time)%20+20)%20-10);
+                    break;
+                }
+                case 1:{
+                    shift=(random::randomInt()&1)-(random::randomInt()&1);
+                    break;
+                }
+                case 2:{
+                    shift=60*((i+time)%20<=10?-1:1);
+                    break;
+                }
+                case 3:{
+                    shift=0;
+                    if(i%5==0)
+                        shift=random::randomInt();
+                    break;
+                }
+                case 4:{
+                    shift=10-(int)abs(((i-time)%20+20)%20-10);
+                    if(i%2)shift+=(random::randomInt()&1)-(random::randomInt()&1);
+                    if(i%20==0)
+                        shift=random::randomInt();
+                    break;
+                }
+                case 5:{
+                    int crash=(((time+i)*107)>>4)+(time+i)*7;
+                    shift=10-(int)abs(((crash)%20+20)%20-10);
+                    break;
+                }
+                case 6:{
+                    shift=(time*(i/10))/2;
+                    break;
+                }
+                case 7:{
+                    shift=0;
+                    if(time<80)time=80;
+                    if(i>80)shift=80;
+                    break;
+                }
+                case 8:{
+                    shift=0;
+                    if(i%3==0)
+                        shift+=(random::randomInt()&3)-(random::randomInt()&3);
+                    else if(i%2)shift+=(random::randomInt()&1)-(random::randomInt()&1);
+                    break;
+                }
+                default:break;
+            }
+            fake_time-=1;
+            int motion = shift%160;//>>2;
+            if(motion<0)motion+=160;
+            int sub_motion = motion&3;
+            motion>>=2;
+            int y_idx = i*screen_byte_length;
+            //tracef("%f",(float)motion);
+            /*if(sub_motion==0 && motion != 0){
+                int target0 = (motion+screen_byte_length)%screen_byte_length;
+                //160=32*5. split this into factors.
+                int gcd = 1;
+                {
+                    int sht=motion;
+                    while((sht&1) == 0){
+                        sht>>=1;
+                        gcd<<=1;
+                    }
+                    if(sht%5 == 0)gcd*=5;
+                }
+                if(gcd<screen_byte_length)
+                for(int ji=0;ji<gcd;++ji){    
+                    //tracef("%f %f",(float)y_idx,(float)ji);
+                    int target = target0 +ji;
+                    if(target>screen_byte_length) target-=screen_byte_length;
+                    auto carry = FRAMEBUFFER[target];
+                    int j=ji;
+                    do{
+                        target+=motion;
+                        j+=motion;
+                        if(target>=screen_byte_length) target-=screen_byte_length;
+                        if(j>=screen_byte_length) j-=screen_byte_length;
+                        FRAMEBUFFER[y_idx + j]=FRAMEBUFFER[y_idx+target];
+                        //tracef("%f %f %f %f",(float)y_idx,(float)j,(float)target,(float)ji);
+                    }while(target!=ji);
+                    FRAMEBUFFER[y_idx+ji]=carry;
+                }
+            }
+            else*/
+            {
+                //Slow as f?
+                uint8_t temp[screen_byte_length];
+                for(int j=0;j<screen_byte_length;++j)
+                    temp[j]=FRAMEBUFFER[y_idx+j];
+                int shift1=sub_motion*2;
+                int shift2=8-shift1;
+                int src0,src1;
+                //tracef("%f %f",(float)sub_motion,(float)motion);
+                motion = screen_byte_length-motion;
+                for(int j=0;j<screen_byte_length;++j){
+                    FRAMEBUFFER[y_idx+j]=
+                        (uint8_t)((uint8_t)temp[(j+motion+0)%screen_byte_length]<<(uint8_t)shift1)
+                        |
+                        (uint8_t)((uint8_t)temp[(j+motion+screen_byte_length-1)%screen_byte_length]>>(uint8_t)shift2)
+                        ;
+                }
+            }
+        }
+        //trace("exit");
+        if(0==(frame&7)) time += 1;
+        ::effect_type = (mode<<24) | (time);
+    }
+#endif
 } // namespace custom_draws

@@ -2,6 +2,9 @@
 #include "colors.h"
 
 FakeVector2 CameraPosition;
+#if ALLOW_EFFECTS
+int effect_type=1;//1<<24;
+#endif
 int frame;
 
 uint32_t emphasise(uint32_t c){

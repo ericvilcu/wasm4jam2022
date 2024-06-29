@@ -8,6 +8,7 @@ namespace song
         CAPTAIN_TENSE=2,
         CAPTAIN_FULL=3,
         PvP=4,
+        PvP_2=5,
         NUM_SONGS
     };
     enum flags:uint8_t{

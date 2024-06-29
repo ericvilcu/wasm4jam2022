@@ -15,7 +15,8 @@ DEBUG = 0
 # Compilation flags
 CFLAGS = -W -Wall -Wextra -Werror -Wno-unused -Wconversion -Wsign-conversion -MMD -MP -fno-exceptions
 ifeq ($(DEBUG), 1)
-	CFLAGS += -DDEBUG -O0 -g
+	CFLAGS += -DNDEBUG -Oz -flto
+# CFLAGS += -DDEBUG -O0 -g
 else
 	CFLAGS += -DNDEBUG -Oz -flto
 endif
@@ -24,7 +25,8 @@ endif
 LDFLAGS = -Wl,-zstack-size=14752,--no-entry,--import-memory -mexec-model=reactor \
 	-Wl,--initial-memory=65536,--max-memory=65536,--stack-first
 ifeq ($(DEBUG), 1)
-	LDFLAGS += -Wl,--export-all,--no-gc-sections
+	LDFLAGS += -Wl,--strip-all,--gc-sections,--lto-O3 -Oz
+# LDFLAGS += -Wl,--export-all,--no-gc-sections
 else
 	LDFLAGS += -Wl,--strip-all,--gc-sections,--lto-O3 -Oz
 endif
@@ -55,13 +57,13 @@ all: build/cart.wasm
 # Link cart.wasm from all object files and run wasm-opt
 build/cart.wasm: $(OBJECTS)
 	$(CXX) -o $@ $(OBJECTS) $(LDFLAGS)
-ifneq ($(DEBUG), 1)
+#ifneq ($(DEBUG), 1)
 ifeq (, $(shell command -v $(WASM_OPT)))
 	@echo Tip: $(WASM_OPT) was not found. Install it from binaryen for smaller builds!
 else
 	$(WASM_OPT) $(WASM_OPT_FLAGS) $@ -o $@
 endif
-endif
+#endif
 
 # Compile C sources
 build/%.o: src/%.c

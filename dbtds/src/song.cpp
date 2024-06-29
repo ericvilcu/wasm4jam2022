@@ -111,6 +111,7 @@ namespace song
         if(song::corSng==2)text("Captain's fears",15,12);
         if(song::corSng==3)text("Captain's brawn",15,12);
         if(song::corSng==4)text("PvP",15,12);
+        if(song::corSng==5)text("PvP (alt)",15,12);
         if(cflag==0)text("Flag 1 (f_1)\nUser flag.\nControls song flow\n\nTypically,\nrepresents how \nintense the\nbattle is.",15,15+8*5+5);
         if(cflag==1)text("Flag 2 (f_2)\nUser flag.\nControls song flow\n\nTypically,\n1 if player 1 is \nclose to winning,\n0 otherwise.",15,15+8*5+5);
         if(cflag==2)text("Flag 3 (f_3)\nUser flag.\nControls song flow\n\nTypically,\n1 if player 2 (or\nan enemy) is\nclose to winning,\n0 otherwise.",15,15+8*5+5);

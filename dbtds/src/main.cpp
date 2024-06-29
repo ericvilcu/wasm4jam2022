@@ -34,12 +34,19 @@ void update () {
         text("THE DARK SEA", (SCREEN_SIZE-8*12)/2, 80+10-4 - 13);
         
         
-        text("DOWN => multiplayer", 0, SCREEN_SIZE-9-8-8);
-        text("X => solo fights", 0, SCREEN_SIZE-9-8);
-        text("Z => story", 0, SCREEN_SIZE-9);
-        if(*GAMEPAD1&BUTTON_DOWN)state = MULTIPLAYER;
-        if(*GAMEPAD1&BUTTON_1)state = STORY;
-        if(*GAMEPAD1&BUTTON_2)state = SOLO;
+        if  (*GAMEPAD1&BUTTON_DOWN){aux++;if(aux>60)state = MULTIPLAYER;}
+        else if(*GAMEPAD1&BUTTON_1){aux++;if(aux>60)state = STORY;}
+        else if(*GAMEPAD1&BUTTON_2){aux++;if(aux>60)state = SOLO;}
+        else{
+            text("DOWN => multiplayer", 0, SCREEN_SIZE-9-8-8);
+            text("X => solo fights", 0, SCREEN_SIZE-9-8);
+            text("Z => story", 0, SCREEN_SIZE-9);
+            aux=0;
+            break;
+        }
+        text("HOLD THAT BUTTON\nDOWN...", 0, SCREEN_SIZE-9-9);
+        custom_draws::drawLine(2,0,0,aux*160/60,0);
+
         break;
     case MULTIPLAYER:
         state = MULTIPLAYER_321;
@@ -53,7 +60,7 @@ void update () {
             auto ent = entities[2].ability.randInit();
             aux=120;
             song::switchTrack(0);
-            song::switchTrack(song::PvP);
+            song::switchTrack((song::PvP)+(random::randomInt()&1));
         }
     case MULTIPLAYER_321:
         //3, 2, 1, GO!
@@ -122,6 +129,15 @@ void update () {
 #if ENABLE_MUSIC
     song::process();
 #endif
+#if ALLOW_EFFECTS
+    if(effect_type!=0){
+        //custom_draws::drawLine(1,0,0,160,160);
+        //custom_draws::drawLine(1,0,0,0,160);
+        //custom_draws::drawLine(2,1,0,1,160);
+        //custom_draws::drawLine(3,2,0,2,160);
+        custom_draws::processEffect();
+    }
+#endif
 }
 
 void saveUnlocks(){
@@ -137,7 +153,7 @@ void start(){
     song::switchTrack(1);
 #endif
 #if MUSIC_TEST_MODE
-    song::switchTrack(4);
+    song::switchTrack(5);
     *song::flag()=0b11111000;
 #endif
     diskr(&SAV,1);
